@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from ..mercadona import Mercadona
 from ..store import Store
-from . import plans, recipes, settings, shopping
+from . import plans, recipes, settings, shopping, stats
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 
@@ -22,7 +22,7 @@ def create_app(store: Store | None = None, static_dir: Path | None = None, shop:
     app.state.store = store
     app.state.shop = shop or Mercadona(store.root / ".cache" / "mercadona.json", store.settings()["warehouse"])
 
-    for module in (recipes, plans, shopping, settings):
+    for module in (recipes, plans, shopping, stats, settings):
         app.include_router(module.router, prefix="/api")
 
     _mount_frontend(app, static_dir or Path(os.environ.get("GUSTEAU_STATIC", STATIC)))

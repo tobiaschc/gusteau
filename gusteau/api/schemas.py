@@ -196,6 +196,51 @@ class PurchasePatch(BaseModel):
     actual_total: float | None = Field(ge=0, le=10_000, description="receipt total; null clears it")
 
 
+# ---- stats ----
+
+
+class DishStat(Model):
+    slug: str | None = Field(description="None: free text eaten instead of the plan")
+    title: str
+    count: int
+    last: dt.date
+
+
+class RecipeRef(Model):
+    slug: str
+    title: str
+
+
+class WeekSpend(Model):
+    week: str
+    total: float
+    exact: bool = Field(description="every purchase that week has its receipt total")
+    purchases: int
+
+
+class MonthSpend(Model):
+    month: str = Field(examples=["2026-10"])
+    total: float
+    exact: bool
+
+
+class Spending(Model):
+    weeks: list[WeekSpend]
+    months: list[MonthSpend]
+    total: float | None
+    average_week: float | None = Field(description="over weeks with a purchase")
+
+
+class Stats(Model):
+    since: str | None = Field(description="first ISO week included; None = all history")
+    meals_eaten: int
+    meals_skipped: int
+    dishes: list[DishStat] = Field(description="lunches and dinners, most eaten first")
+    breakfasts: list[DishStat]
+    never_eaten: list[RecipeRef] = Field(description="lunch/dinner recipes not eaten in the period")
+    spending: Spending
+
+
 # ---- settings ----
 
 

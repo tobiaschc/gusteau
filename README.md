@@ -18,6 +18,7 @@ A minimalist bank of healthy recipes plus a weekly planner that tells you what t
 - Recipes are plain [Cooklang](https://cooklang.org) files (`recipes/*.cook`), written for 1 serving.
 - A weekly plan (breakfast, lunch, dinner) is generated from the bank or filled in by hand.
 - The shopping list adds up every ingredient in the plan, scaled to the number of people (default 2), grouped by aisle in the order of `aisles.yml`.
+- History and stats: meals of past days count as eaten unless marked "no se hizo" or "comimos otra cosa"; "Compra hecha" saves the list with that day's prices (plus the receipt total if you enter it). The Datos page shows the most repeated dishes, recipes you never cook, and spending per week and month.
 
 ## Run
 
@@ -37,7 +38,8 @@ gusteau/
   cooklang.py   parser            planner.py   weekly plan generator
   shopping.py   list + units      mercadona.py  product search, packs, prices (unofficial)
   store.py      data access: .cook files (atomic writes, recipe cache, seed sync) + database
-  db.py         SQLAlchemy models (plans, settings) and engine; migrations/ = Alembic
+  db.py         SQLAlchemy models (plans, meals, purchases, settings) and engine; migrations/ = Alembic
+  stats.py      SQL aggregations behind /api/stats
   api/          FastAPI routers (recipes, plans, shopping, settings) + schemas.py (the API contract)
 frontend/src/
   pages/  components/  lib/api.ts (client) + lib/api.gen.ts (generated types)
@@ -97,6 +99,10 @@ The shopping list shows, per ingredient, the Mercadona product, how many packs t
 | GET/PUT | `/api/plans/{YYYY-Www}`              | weekly plan                       |
 | POST   | `/api/plans/{week}/generate`          | fill empty slots (`keep: false` to redo all) |
 | GET    | `/api/plans/{week}/shopping[.md]`     | shopping list (`?people=N`)       |
+| PUT    | `/api/plans/{week}/meals/{day}/{slot}/outcome` | `cooked` (default) / `skipped` / `swapped` |
+| POST   | `/api/plans/{week}/purchases`         | "compra hecha": freeze the list and prices |
+| GET/PATCH/DELETE | `/api/purchases[/{id}]`     | purchases; PATCH sets the receipt total |
+| GET    | `/api/stats?weeks=26`                 | dishes eaten, never eaten, spending (`0` = all) |
 | GET/PUT | `/api/settings`                      | `people`, `prices`                |
 | GET    | `/api/products/search?q=`             | Mercadona product search          |
 | PUT    | `/api/products/{ingredient}`          | pick product (`{"id": null}` = not at Mercadona) |

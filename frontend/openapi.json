@@ -43,6 +43,43 @@
         "title": "CookwareSegment",
         "type": "object"
       },
+      "DishStat": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "last": {
+            "format": "date",
+            "title": "Last",
+            "type": "string"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None: free text eaten instead of the plan",
+            "title": "Slug"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "count",
+          "last"
+        ],
+        "title": "DishStat",
+        "type": "object"
+      },
       "GenerateIn": {
         "properties": {
           "keep": {
@@ -199,6 +236,32 @@
           "swap_title"
         ],
         "title": "MealOutcome",
+        "type": "object"
+      },
+      "MonthSpend": {
+        "properties": {
+          "exact": {
+            "title": "Exact",
+            "type": "boolean"
+          },
+          "month": {
+            "examples": [
+              "2026-10"
+            ],
+            "title": "Month",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "number"
+          }
+        },
+        "required": [
+          "month",
+          "total",
+          "exact"
+        ],
+        "title": "MonthSpend",
         "type": "object"
       },
       "OutcomeIn": {
@@ -854,6 +917,24 @@
         "title": "RecipeIn",
         "type": "object"
       },
+      "RecipeRef": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "title"
+        ],
+        "title": "RecipeRef",
+        "type": "object"
+      },
       "RecipeSummary": {
         "properties": {
           "ingredients": {
@@ -1067,6 +1148,116 @@
         "title": "ShoppingItem",
         "type": "object"
       },
+      "Spending": {
+        "properties": {
+          "average_week": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "over weeks with a purchase",
+            "title": "Average Week"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthSpend"
+            },
+            "title": "Months",
+            "type": "array"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/WeekSpend"
+            },
+            "title": "Weeks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "weeks",
+          "months",
+          "total",
+          "average_week"
+        ],
+        "title": "Spending",
+        "type": "object"
+      },
+      "Stats": {
+        "properties": {
+          "breakfasts": {
+            "items": {
+              "$ref": "#/components/schemas/DishStat"
+            },
+            "title": "Breakfasts",
+            "type": "array"
+          },
+          "dishes": {
+            "description": "lunches and dinners, most eaten first",
+            "items": {
+              "$ref": "#/components/schemas/DishStat"
+            },
+            "title": "Dishes",
+            "type": "array"
+          },
+          "meals_eaten": {
+            "title": "Meals Eaten",
+            "type": "integer"
+          },
+          "meals_skipped": {
+            "title": "Meals Skipped",
+            "type": "integer"
+          },
+          "never_eaten": {
+            "description": "lunch/dinner recipes not eaten in the period",
+            "items": {
+              "$ref": "#/components/schemas/RecipeRef"
+            },
+            "title": "Never Eaten",
+            "type": "array"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "first ISO week included; None = all history",
+            "title": "Since"
+          },
+          "spending": {
+            "$ref": "#/components/schemas/Spending"
+          }
+        },
+        "required": [
+          "since",
+          "meals_eaten",
+          "meals_skipped",
+          "dishes",
+          "breakfasts",
+          "never_eaten",
+          "spending"
+        ],
+        "title": "Stats",
+        "type": "object"
+      },
       "TextSegment": {
         "properties": {
           "type": {
@@ -1160,6 +1351,35 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WeekSpend": {
+        "properties": {
+          "exact": {
+            "description": "every purchase that week has its receipt total",
+            "title": "Exact",
+            "type": "boolean"
+          },
+          "purchases": {
+            "title": "Purchases",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "number"
+          },
+          "week": {
+            "title": "Week",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week",
+          "total",
+          "exact",
+          "purchases"
+        ],
+        "title": "WeekSpend",
         "type": "object"
       }
     }
@@ -2136,6 +2356,53 @@
         "summary": "Put Settings",
         "tags": [
           "settings"
+        ]
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "operationId": "get_stats_api_stats_get",
+        "parameters": [
+          {
+            "description": "last N weeks, this one included; 0 = all",
+            "in": "query",
+            "name": "weeks",
+            "required": false,
+            "schema": {
+              "default": 26,
+              "description": "last N weeks, this one included; 0 = all",
+              "maximum": 520,
+              "minimum": 0,
+              "title": "Weeks",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stats"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Stats",
+        "tags": [
+          "stats"
         ]
       }
     }

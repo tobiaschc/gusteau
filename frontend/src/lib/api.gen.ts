@@ -268,6 +268,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Stats */
+        get: operations["get_stats_api_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -290,6 +307,23 @@ export interface components {
              * @enum {string}
              */
             type: "cookware";
+        };
+        /** DishStat */
+        DishStat: {
+            /** Count */
+            count: number;
+            /**
+             * Last
+             * Format: date
+             */
+            last: string;
+            /**
+             * Slug
+             * @description None: free text eaten instead of the plan
+             */
+            slug: string | null;
+            /** Title */
+            title: string;
         };
         /** GenerateIn */
         GenerateIn: {
@@ -352,6 +386,18 @@ export interface components {
              * @description title of what was eaten instead (swapped)
              */
             swap_title: string | null;
+        };
+        /** MonthSpend */
+        MonthSpend: {
+            /** Exact */
+            exact: boolean;
+            /**
+             * Month
+             * @example 2026-10
+             */
+            month: string;
+            /** Total */
+            total: number;
         };
         /** OutcomeIn */
         OutcomeIn: {
@@ -563,6 +609,13 @@ export interface components {
              */
             source: string;
         };
+        /** RecipeRef */
+        RecipeRef: {
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+        };
         /** RecipeSummary */
         RecipeSummary: {
             /**
@@ -626,6 +679,45 @@ export interface components {
             /** Recipes */
             recipes: string[];
         };
+        /** Spending */
+        Spending: {
+            /**
+             * Average Week
+             * @description over weeks with a purchase
+             */
+            average_week: number | null;
+            /** Months */
+            months: components["schemas"]["MonthSpend"][];
+            /** Total */
+            total: number | null;
+            /** Weeks */
+            weeks: components["schemas"]["WeekSpend"][];
+        };
+        /** Stats */
+        Stats: {
+            /** Breakfasts */
+            breakfasts: components["schemas"]["DishStat"][];
+            /**
+             * Dishes
+             * @description lunches and dinners, most eaten first
+             */
+            dishes: components["schemas"]["DishStat"][];
+            /** Meals Eaten */
+            meals_eaten: number;
+            /** Meals Skipped */
+            meals_skipped: number;
+            /**
+             * Never Eaten
+             * @description lunch/dinner recipes not eaten in the period
+             */
+            never_eaten: components["schemas"]["RecipeRef"][];
+            /**
+             * Since
+             * @description first ISO week included; None = all history
+             */
+            since: string | null;
+            spending: components["schemas"]["Spending"];
+        };
         /** TextSegment */
         TextSegment: {
             /**
@@ -662,6 +754,20 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WeekSpend */
+        WeekSpend: {
+            /**
+             * Exact
+             * @description every purchase that week has its receipt total
+             */
+            exact: boolean;
+            /** Purchases */
+            purchases: number;
+            /** Total */
+            total: number;
+            /** Week */
+            week: string;
         };
     };
     responses: never;
@@ -1305,6 +1411,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Settings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stats_api_stats_get: {
+        parameters: {
+            query?: {
+                /** @description last N weeks, this one included; 0 = all */
+                weeks?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stats"];
                 };
             };
             /** @description Validation Error */

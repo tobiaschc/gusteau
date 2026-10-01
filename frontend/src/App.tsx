@@ -6,6 +6,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage"
 import { PlanPage } from "@/pages/PlanPage"
 import { RecipePage } from "@/pages/RecipePage"
 import { RecipesPage } from "@/pages/RecipesPage"
+import { StatsPage } from "@/pages/StatsPage"
 import { ShoppingPage } from "@/pages/ShoppingPage"
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="recipes/:slug" element={<RecipePage />} />
           <Route path="recipes/:slug/edit" element={<EditorPage />} />
           <Route path="list" element={<ShoppingPage />} />
+          <Route path="stats" element={<StatsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

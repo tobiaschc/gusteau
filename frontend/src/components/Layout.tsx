@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, Minus, Moon, Plus, ShoppingBasket, Sun, Users } from "lucide-react"
+import { BarChart3, BookOpen, CalendarDays, Minus, Moon, Plus, ShoppingBasket, Sun, Users } from "lucide-react"
 import { NavLink, Outlet } from "react-router-dom"
 import { RotatingQuote, ToqueMark } from "@/components/Brand"
 import { useApp } from "@/lib/context"
@@ -8,6 +8,7 @@ const NAV = [
   { to: "/", label: "Plan", icon: CalendarDays, end: true },
   { to: "/recipes", label: "Recetas", icon: BookOpen, end: false },
   { to: "/list", label: "Lista", icon: ShoppingBasket, end: false },
+  { to: "/stats", label: "Datos", icon: BarChart3, end: false },
 ]
 
 export function PeopleStepper({ className }: { className?: string }) {
@@ -115,7 +116,7 @@ export function Layout() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center gap-0.5 rounded-xl px-5 py-1.5 text-[11px] font-medium transition-colors",
+                  "flex flex-col items-center gap-0.5 rounded-xl px-4 py-1.5 text-[11px] font-medium transition-colors",
                   isActive ? "bg-secondary text-foreground [&>svg]:text-brand" : "text-muted-foreground",
                 )
               }

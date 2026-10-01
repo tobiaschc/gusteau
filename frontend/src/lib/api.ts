@@ -13,6 +13,7 @@ export type Shopping = S["Shopping"]
 export type Settings = S["Settings"]
 export type MealOutcome = S["MealOutcome"]
 export type Purchase = S["Purchase"]
+export type Stats = S["Stats"]
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -48,6 +49,7 @@ export const api = {
   updatePurchase: (id: number, actual_total: number | null) =>
     request<Purchase>(`/purchases/${id}`, json("PATCH", { actual_total })),
   deletePurchase: (id: number) => request<void>(`/purchases/${id}`, { method: "DELETE" }),
+  stats: (weeks: number) => request<Stats>(`/stats?weeks=${weeks}`),
   settings: () => request<Settings>("/settings"),
   saveSettings: (s: S["SettingsIn"]) => request<Settings>("/settings", json("PUT", s)),
   searchProducts: (q: string) => request<Product[]>(`/products/search?q=${encodeURIComponent(q)}`),
