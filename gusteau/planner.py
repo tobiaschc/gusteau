@@ -103,7 +103,8 @@ def generate(plan: dict, recipes: list[Recipe], keep: bool = True, seed: int | N
     on consecutive days, spreads repeats, balances legumes / fish / meat across the
     week's lunches and dinners (BALANCE), favours `habitual` recipes (HABITUAL_TARGET)
     and keeps `finde` recipes for the weekend. `keep=False` refills every slot.
-    Greedy fill with random restarts; the plan with the lowest `penalty` wins.
+    Greedy fill with random restarts; the plan with the lowest `penalty` wins and is
+    then polished by a single-slot hill-climb.
     """
     rng = random.Random(seed)
     slots = list(next(iter(plan["days"].values()), {}))
@@ -122,4 +123,32 @@ def generate(plan: dict, recipes: list[Recipe], keep: bool = True, seed: int | N
             best, best_score = candidate, score
         if score == 0:
             break
+    if best_score:
+        best = _improve(best, start, pools, known, tags, weekend_only, rng)
     return {**plan, "days": best}
+
+
+def _improve(days, start, pools, known, tags, weekend_only, rng, max_rounds=5):
+    """Hill-climb: re-pick single free slots while that lowers the penalty. The greedy
+    restarts find a good shape; this fixes the last few conflicts they leave behind."""
+    days = {d: dict(v) for d, v in days.items()}
+    score = penalty(days, tags)
+    free = [(d, s) for d, day in start.items() for s in day if day[s] not in known]
+    for _ in range(max_rounds):
+        improved = False
+        for d, s in rng.sample(free, len(free)):
+            current = days[d][s]
+            for slug in pools[s]:
+                if slug == current or (d not in WEEKEND and slug in weekend_only):
+                    continue
+                days[d][s] = slug
+                new = penalty(days, tags)
+                if new < score:
+                    score, current, improved = new, slug, True
+                else:
+                    days[d][s] = current
+            if score == 0:
+                return days
+        if not improved:
+            break
+    return days

@@ -66,3 +66,16 @@ def test_generate_favours_habitual_recipes(tmp_path):
         mains = [d[s] for d in days for s in ("comida", "cena")]
         assert 4 <= sum(m in usual for m in mains) <= 6, seed
         assert all(mains.count(m) <= HABITUAL_MAX_EACH for m in usual), seed
+
+
+def test_generate_finds_near_optimal_weeks(tmp_path):
+    """Greedy restarts + hill-climb: with the bundled bank nearly every week has no conflicts."""
+    from gusteau.planner import penalty
+
+    store = Store(tmp_path)
+    recipes = store.list_recipes()
+    tags = {r.slug: r.tags for r in recipes}
+    scores = [
+        penalty(generate(store.get_plan(WEEK), recipes, keep=False, seed=seed)["days"], tags) for seed in range(8)
+    ]
+    assert max(scores) <= 4 and scores.count(0) >= 6, scores
