@@ -17,6 +17,7 @@ with engine.connect() as connection:
         target_metadata=Base.metadata,
         render_as_batch=True,  # SQLite can't ALTER most things: migrations rebuild the table instead
         compare_type=True,
+        user_module_prefix="gusteau.db.",
     )
     with context.begin_transaction():
         context.run_migrations()

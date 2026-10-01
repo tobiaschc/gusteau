@@ -158,6 +158,94 @@
         "title": "IngredientSegment",
         "type": "object"
       },
+      "MealOutcome": {
+        "properties": {
+          "status": {
+            "enum": [
+              "skipped",
+              "swapped"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "swap_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "recipe eaten instead (swapped)",
+            "title": "Swap Slug"
+          },
+          "swap_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "title of what was eaten instead (swapped)",
+            "title": "Swap Title"
+          }
+        },
+        "required": [
+          "status",
+          "swap_slug",
+          "swap_title"
+        ],
+        "title": "MealOutcome",
+        "type": "object"
+      },
+      "OutcomeIn": {
+        "properties": {
+          "status": {
+            "description": "cooked = as planned (the default)",
+            "enum": [
+              "cooked",
+              "skipped",
+              "swapped"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "swap_slug": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "recipe eaten instead",
+            "title": "Swap Slug"
+          },
+          "swap_title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "or free text, e.g. 'pizza fuera'",
+            "title": "Swap Title"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "OutcomeIn",
+        "type": "object"
+      },
       "Plan": {
         "properties": {
           "days": {
@@ -175,6 +263,17 @@
               "type": "object"
             },
             "title": "Days",
+            "type": "object"
+          },
+          "outcomes": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/MealOutcome"
+              },
+              "type": "object"
+            },
+            "description": "day -> slot -> what happened, only for meals NOT cooked as planned",
+            "title": "Outcomes",
             "type": "object"
           },
           "titles": {
@@ -200,7 +299,8 @@
         "required": [
           "week",
           "days",
-          "titles"
+          "titles",
+          "outcomes"
         ],
         "title": "Plan",
         "type": "object"
@@ -403,6 +503,166 @@
           "id"
         ],
         "title": "ProductPick",
+        "type": "object"
+      },
+      "Purchase": {
+        "properties": {
+          "actual_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "receipt total, if entered",
+            "title": "Actual Total"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "estimated_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mercadona estimate when bought (None: no prices then)",
+            "title": "Estimated Total"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PurchaseItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "people": {
+            "title": "People",
+            "type": "integer"
+          },
+          "week": {
+            "title": "Week",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "week",
+          "created_at",
+          "people",
+          "estimated_total",
+          "actual_total",
+          "items"
+        ],
+        "title": "Purchase",
+        "type": "object"
+      },
+      "PurchaseItem": {
+        "properties": {
+          "amounts": {
+            "items": {
+              "$ref": "#/components/schemas/Amount"
+            },
+            "title": "Amounts",
+            "type": "array"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "packs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Packs"
+          },
+          "pantry": {
+            "title": "Pantry",
+            "type": "boolean"
+          },
+          "product": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product"
+          },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id"
+          }
+        },
+        "required": [
+          "name",
+          "amounts",
+          "product_id",
+          "product",
+          "packs",
+          "cost",
+          "pantry"
+        ],
+        "title": "PurchaseItem",
+        "type": "object"
+      },
+      "PurchasePatch": {
+        "properties": {
+          "actual_total": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "receipt total; null clears it",
+            "title": "Actual Total"
+          }
+        },
+        "required": [
+          "actual_total"
+        ],
+        "title": "PurchasePatch",
         "type": "object"
       },
       "Recipe": {
@@ -1114,6 +1374,148 @@
         ]
       }
     },
+    "/api/plans/{week}/meals/{day}/{slot}/outcome": {
+      "put": {
+        "description": "Mark a planned meal as cooked (default), skipped, or swapped for another recipe / free text.",
+        "operationId": "set_outcome_api_plans__week__meals__day___slot__outcome_put",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "day",
+            "required": true,
+            "schema": {
+              "title": "Day",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "slot",
+            "required": true,
+            "schema": {
+              "title": "Slot",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutcomeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Outcome",
+        "tags": [
+          "plans"
+        ]
+      }
+    },
+    "/api/plans/{week}/purchases": {
+      "post": {
+        "operationId": "create_purchase_api_plans__week__purchases_post",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "people",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "People"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Purchase"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Purchase",
+        "tags": [
+          "shopping",
+          "purchases"
+        ]
+      }
+    },
     "/api/plans/{week}/shopping": {
       "get": {
         "operationId": "get_shopping_api_plans__week__shopping_get",
@@ -1339,6 +1741,152 @@
         "tags": [
           "shopping",
           "mercadona"
+        ]
+      }
+    },
+    "/api/purchases": {
+      "get": {
+        "operationId": "list_purchases_api_purchases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "week",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "description": "ISO week YYYY-Www",
+                  "examples": [
+                    "2026-W40"
+                  ],
+                  "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Week"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Purchase"
+                  },
+                  "title": "Response List Purchases Api Purchases Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Purchases",
+        "tags": [
+          "shopping",
+          "purchases"
+        ]
+      }
+    },
+    "/api/purchases/{purchase_id}": {
+      "delete": {
+        "operationId": "delete_purchase_api_purchases__purchase_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "purchase_id",
+            "required": true,
+            "schema": {
+              "title": "Purchase Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Purchase",
+        "tags": [
+          "shopping",
+          "purchases"
+        ]
+      },
+      "patch": {
+        "operationId": "update_purchase_api_purchases__purchase_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "purchase_id",
+            "required": true,
+            "schema": {
+              "title": "Purchase Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurchasePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Purchase"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Purchase",
+        "tags": [
+          "shopping",
+          "purchases"
         ]
       }
     },

@@ -9,7 +9,17 @@ from ..mercadona import Mercadona, MercadonaError, price_item
 from ..shopping import Item, format_amount, shopping_list
 from ..store import Store
 from .deps import ShopDep, StoreDep, Week
-from .schemas import Amount, PricedItem, Product, ProductIn, ProductPick, Shopping, ShoppingItem
+from .schemas import (
+    Amount,
+    PricedItem,
+    Product,
+    ProductIn,
+    ProductPick,
+    Purchase,
+    PurchasePatch,
+    Shopping,
+    ShoppingItem,
+)
 
 router = APIRouter(tags=["shopping"])
 
@@ -91,3 +101,47 @@ def search_products(q: str, shop: ShopDep):
 def set_product(ingredient: str, body: ProductIn, store: StoreDep):
     store.set_product(ingredient, body.id)
     return ProductPick(ingredient=ingredient.lower(), id=body.id)
+
+
+# ---- purchases: the list frozen with that day's prices, for spending stats ----
+
+
+@router.post("/plans/{week}/purchases", status_code=201, response_model=Purchase, tags=["purchases"])
+def create_purchase(week: Week, store: StoreDep, shop: ShopDep, people: int | None = None):
+    data = build_shopping(store, shop, week, people)
+    if not data.items:
+        raise HTTPException(409, "esta semana no tiene comidas planificadas")
+    items = [
+        {
+            "name": i.name,
+            "amounts": [a.model_dump() for a in i.amounts],
+            "product_id": i.mercadona.product.id if i.mercadona else None,
+            "product": i.mercadona.product.name if i.mercadona else None,
+            "packs": i.mercadona.packs if i.mercadona else None,
+            "cost": i.mercadona.cost if i.mercadona else None,
+            "pantry": bool(i.mercadona and i.mercadona.pantry),
+        }
+        for i in data.items
+    ]
+    return store.add_purchase(week, data.people, data.total, items)
+
+
+@router.get("/purchases", response_model=list[Purchase], tags=["purchases"])
+def list_purchases(store: StoreDep, week: Week | None = None):
+    return store.purchases(week)
+
+
+@router.patch("/purchases/{purchase_id}", response_model=Purchase, tags=["purchases"])
+def update_purchase(purchase_id: int, body: PurchasePatch, store: StoreDep):
+    try:
+        return store.update_purchase(purchase_id, body.actual_total)
+    except KeyError:
+        raise HTTPException(404, "compra no encontrada") from None
+
+
+@router.delete("/purchases/{purchase_id}", status_code=204, tags=["purchases"])
+def delete_purchase(purchase_id: int, store: StoreDep) -> None:
+    try:
+        store.delete_purchase(purchase_id)
+    except KeyError:
+        raise HTTPException(404, "compra no encontrada") from None

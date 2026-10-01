@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button"
 import { Card } from "@/components/ui/Card"
 import { EmptyState, ErrorBox, Loading, PageHeader } from "@/components/ui/States"
 import { euro, ProductPicker } from "@/components/ProductPicker"
+import { PurchaseBar } from "@/components/PurchaseBar"
 import { WeekNav } from "@/components/WeekNav"
 import { api, type ShoppingItem } from "@/lib/api"
 import { useApp } from "@/lib/context"
@@ -118,6 +119,7 @@ export function ShoppingPage() {
                 </Button>
               )}
             </div>
+            <PurchaseBar week={week} people={people} />
             <div className="columns-1 gap-4 md:columns-2 xl:columns-3">
               {groups.map(([aisle, items]) => (
                 <Card key={aisle} className="mb-4 break-inside-avoid p-4">

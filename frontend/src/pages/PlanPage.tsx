@@ -1,6 +1,7 @@
-import { Plus, RefreshCw, ShoppingBasket, Sparkles } from "lucide-react"
+import { Plus, RefreshCw, Repeat, ShoppingBasket, Sparkles, X } from "lucide-react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { OutcomeDialog } from "@/components/OutcomeDialog"
 import { RecipePicker } from "@/components/RecipePicker"
 import { SlotIcon } from "@/components/SlotIcon"
 import { Button } from "@/components/ui/Button"
@@ -20,6 +21,7 @@ export function PlanPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [picking, setPicking] = useState<{ day: string; slot: string } | null>(null)
+  const [reviewing, setReviewing] = useState<{ day: string; slot: string } | null>(null)
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true)
@@ -87,6 +89,8 @@ export function PlanPage() {
                 date.getUTCFullYear() === today.getFullYear() &&
                 date.getUTCMonth() === today.getMonth() &&
                 date.getUTCDate() === today.getDate()
+              // past days (and today) count as cooked unless marked otherwise
+              const isPast = date.getTime() <= Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
               return (
                 <Card key={day} className={cn("p-4", isToday && "ring-2 ring-brand/60")}>
                   <div className="mb-3 flex items-baseline justify-between">
@@ -97,15 +101,42 @@ export function PlanPage() {
                     </span>
                   </div>
                   <div className="space-y-1">
-                    {Object.entries(slots).map(([slot, slug]) => (
+                    {Object.entries(slots).map(([slot, slug]) => {
+                      const out = data.outcomes[day]?.[slot]
+                      return (
                       <div key={slot} className="group flex items-center gap-3 rounded-md p-1.5 transition-colors hover:bg-accent/60">
                         <SlotIcon slot={slot} />
-                        <button className="min-w-0 flex-1 text-left" onClick={() => setPicking({ day, slot })}>
+                        <button
+                          className="min-w-0 flex-1 text-left"
+                          onClick={() => (slug && isPast ? setReviewing({ day, slot }) : setPicking({ day, slot }))}
+                        >
                           <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                             {SLOT_LABELS[slot] ?? slot}
                           </div>
                           {slug ? (
-                            <div className="line-clamp-2 text-sm font-medium leading-snug">{data.titles[slug] ?? slug}</div>
+                            <>
+                              <div
+                                className={cn(
+                                  "line-clamp-2 text-sm font-medium leading-snug",
+                                  out && "text-muted-foreground line-through decoration-muted-foreground/60",
+                                )}
+                              >
+                                {data.titles[slug] ?? slug}
+                              </div>
+                              {out && (
+                                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                  {out.status === "skipped" ? (
+                                    <>
+                                      <X className="h-3 w-3" /> No se hizo
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Repeat className="h-3 w-3" /> {out.swap_title}
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </>
                           ) : (
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Plus className="h-3.5 w-3.5" /> Añadir
@@ -121,7 +152,8 @@ export function PlanPage() {
                           </Link>
                         )}
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </Card>
               )
@@ -129,6 +161,21 @@ export function PlanPage() {
           </div>
           </>
         )
+      )}
+
+      {reviewing && data && (
+        <OutcomeDialog
+          title={`${DAY_LABELS[reviewing.day] ?? reviewing.day} · ${SLOT_LABELS[reviewing.slot] ?? reviewing.slot}`}
+          planned={`Planificado: ${data.titles[data.days[reviewing.day][reviewing.slot] ?? ""] ?? ""}`}
+          outcome={data.outcomes[reviewing.day]?.[reviewing.slot]}
+          recipes={recipes.data ?? []}
+          onClose={() => setReviewing(null)}
+          onSave={async (o) => plan.setData(await api.setOutcome(week, reviewing.day, reviewing.slot, o))}
+          onChangePlan={() => {
+            setPicking(reviewing)
+            setReviewing(null)
+          }}
+        />
       )}
 
       {picking && data && (

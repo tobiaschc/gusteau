@@ -73,6 +73,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/plans/{week}/meals/{day}/{slot}/outcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Outcome
+         * @description Mark a planned meal as cooked (default), skipped, or swapped for another recipe / free text.
+         */
+        put: operations["set_outcome_api_plans__week__meals__day___slot__outcome_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plans/{week}/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Purchase */
+        post: operations["create_purchase_api_plans__week__purchases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/plans/{week}/shopping": {
         parameters: {
             query?: never;
@@ -139,6 +176,41 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Purchases */
+        get: operations["list_purchases_api_purchases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/purchases/{purchase_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Purchase */
+        delete: operations["delete_purchase_api_purchases__purchase_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Purchase */
+        patch: operations["update_purchase_api_purchases__purchase_id__patch"];
         trace?: never;
     };
     "/api/recipes": {
@@ -263,12 +335,58 @@ export interface components {
             /** Unit */
             unit: string;
         };
+        /** MealOutcome */
+        MealOutcome: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "skipped" | "swapped";
+            /**
+             * Swap Slug
+             * @description recipe eaten instead (swapped)
+             */
+            swap_slug: string | null;
+            /**
+             * Swap Title
+             * @description title of what was eaten instead (swapped)
+             */
+            swap_title: string | null;
+        };
+        /** OutcomeIn */
+        OutcomeIn: {
+            /**
+             * Status
+             * @description cooked = as planned (the default)
+             * @enum {string}
+             */
+            status: "cooked" | "skipped" | "swapped";
+            /**
+             * Swap Slug
+             * @description recipe eaten instead
+             */
+            swap_slug?: string | null;
+            /**
+             * Swap Title
+             * @description or free text, e.g. 'pizza fuera'
+             */
+            swap_title?: string | null;
+        };
         /** Plan */
         Plan: {
             /** Days */
             days: {
                 [key: string]: {
                     [key: string]: string | null;
+                };
+            };
+            /**
+             * Outcomes
+             * @description day -> slot -> what happened, only for meals NOT cooked as planned
+             */
+            outcomes: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["MealOutcome"];
                 };
             };
             /**
@@ -349,6 +467,57 @@ export interface components {
             id: string | null;
             /** Ingredient */
             ingredient: string;
+        };
+        /** Purchase */
+        Purchase: {
+            /**
+             * Actual Total
+             * @description receipt total, if entered
+             */
+            actual_total: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Estimated Total
+             * @description Mercadona estimate when bought (None: no prices then)
+             */
+            estimated_total: number | null;
+            /** Id */
+            id: number;
+            /** Items */
+            items: components["schemas"]["PurchaseItem"][];
+            /** People */
+            people: number;
+            /** Week */
+            week: string;
+        };
+        /** PurchaseItem */
+        PurchaseItem: {
+            /** Amounts */
+            amounts: components["schemas"]["Amount"][];
+            /** Cost */
+            cost: number | null;
+            /** Name */
+            name: string;
+            /** Packs */
+            packs: number | null;
+            /** Pantry */
+            pantry: boolean;
+            /** Product */
+            product: string | null;
+            /** Product Id */
+            product_id: string | null;
+        };
+        /** PurchasePatch */
+        PurchasePatch: {
+            /**
+             * Actual Total
+             * @description receipt total; null clears it
+             */
+            actual_total: number | null;
         };
         /** Recipe */
         Recipe: {
@@ -647,6 +816,78 @@ export interface operations {
             };
         };
     };
+    set_outcome_api_plans__week__meals__day___slot__outcome_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ISO week YYYY-Www */
+                week: string;
+                day: string;
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutcomeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Plan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_purchase_api_plans__week__purchases_post: {
+        parameters: {
+            query?: {
+                people?: number | null;
+            };
+            header?: never;
+            path: {
+                /** @description ISO week YYYY-Www */
+                week: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_shopping_api_plans__week__shopping_get: {
         parameters: {
             query?: {
@@ -768,6 +1009,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductPick"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_purchases_api_purchases_get: {
+        parameters: {
+            query?: {
+                week?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_purchase_api_purchases__purchase_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                purchase_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_purchase_api_purchases__purchase_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                purchase_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchasePatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
                 };
             };
             /** @description Validation Error */

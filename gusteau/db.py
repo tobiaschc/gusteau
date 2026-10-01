@@ -14,7 +14,19 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import JSON, DateTime, Engine, ForeignKey, String, UniqueConstraint, create_engine, event
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    Engine,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    TypeDecorator,
+    UniqueConstraint,
+    create_engine,
+    event,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 MIGRATIONS = Path(__file__).resolve().parent / "migrations"
@@ -22,6 +34,24 @@ MIGRATIONS = Path(__file__).resolve().parent / "migrations"
 
 def utcnow() -> dt.datetime:
     return dt.datetime.now(dt.UTC)
+
+
+class UTCDateTime(TypeDecorator):
+    """Aware UTC datetimes. SQLite has no timezone type and hands back naive values, which
+    the API would serialise without an offset (and browsers would read as local time)."""
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value: dt.datetime | None, _dialect):
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            raise ValueError("naive datetime: use an aware UTC value")
+        return value.astimezone(dt.UTC).replace(tzinfo=None)
+
+    def process_result_value(self, value: dt.datetime | None, _dialect):
+        return value.replace(tzinfo=dt.UTC) if value is not None else None
 
 
 class Base(DeclarativeBase):
@@ -39,7 +69,7 @@ class Plan(Base):
     __tablename__ = "plans"
 
     week: Mapped[str] = mapped_column(String(8), primary_key=True)  # ISO week, 2026-W40
-    updated_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    updated_at: Mapped[dt.datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
     meals: Mapped[list[Meal]] = relationship(back_populates="plan", cascade="all, delete-orphan")
 
 
@@ -56,7 +86,25 @@ class Meal(Base):
     recipe_slug: Mapped[str] = mapped_column(String(120), index=True)
     # title at planning time: history stays readable if the recipe is renamed or deleted
     recipe_title: Mapped[str] = mapped_column(String(200))
+    # what actually happened; None = cooked as planned (the default once the day has passed)
+    status: Mapped[str | None] = mapped_column(String(10), default=None)  # "skipped" | "swapped"
+    swap_slug: Mapped[str | None] = mapped_column(String(120), default=None)  # "swapped": the recipe eaten instead,
+    swap_title: Mapped[str | None] = mapped_column(String(200), default=None)  # or just a free-text title
     plan: Mapped[Plan] = relationship(back_populates="meals")
+
+
+class Purchase(Base):
+    """A shopping trip: the week's list frozen with the Mercadona prices of that moment."""
+
+    __tablename__ = "purchases"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    week: Mapped[str] = mapped_column(ForeignKey("plans.week", ondelete="CASCADE"), index=True)
+    created_at: Mapped[dt.datetime] = mapped_column(UTCDateTime, default=utcnow)
+    people: Mapped[int] = mapped_column(Integer)
+    estimated_total: Mapped[float | None] = mapped_column(Float)  # Mercadona estimate (None: no prices then)
+    actual_total: Mapped[float | None] = mapped_column(Float, default=None)  # from the receipt, if entered
+    items: Mapped[list] = mapped_column(JSON)  # [{name, amounts, product_id, product, packs, cost, pantry}]
 
 
 def make_engine(path: Path) -> Engine:

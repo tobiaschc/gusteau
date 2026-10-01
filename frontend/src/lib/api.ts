@@ -11,6 +11,8 @@ export type PricedItem = S["PricedItem"]
 export type ShoppingItem = S["ShoppingItem"]
 export type Shopping = S["Shopping"]
 export type Settings = S["Settings"]
+export type MealOutcome = S["MealOutcome"]
+export type Purchase = S["Purchase"]
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -38,6 +40,14 @@ export const api = {
   generate: (week: string, keep: boolean) => request<Plan>(`/plans/${week}/generate`, json("POST", { keep })),
   shopping: (week: string, people?: number) =>
     request<Shopping>(`/plans/${week}/shopping${people ? `?people=${people}` : ""}`),
+  setOutcome: (week: string, day: string, slot: string, o: S["OutcomeIn"]) =>
+    request<Plan>(`/plans/${week}/meals/${day}/${slot}/outcome`, json("PUT", o)),
+  purchases: (week?: string) => request<Purchase[]>(`/purchases${week ? `?week=${week}` : ""}`),
+  createPurchase: (week: string, people?: number) =>
+    request<Purchase>(`/plans/${week}/purchases${people ? `?people=${people}` : ""}`, { method: "POST" }),
+  updatePurchase: (id: number, actual_total: number | null) =>
+    request<Purchase>(`/purchases/${id}`, json("PATCH", { actual_total })),
+  deletePurchase: (id: number) => request<void>(`/purchases/${id}`, { method: "DELETE" }),
   settings: () => request<Settings>("/settings"),
   saveSettings: (s: S["SettingsIn"]) => request<Settings>("/settings", json("PUT", s)),
   searchProducts: (q: string) => request<Product[]>(`/products/search?q=${encodeURIComponent(q)}`),

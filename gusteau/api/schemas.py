@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -89,10 +90,25 @@ class GenerateIn(BaseModel):
     seed: int | None = None
 
 
+class MealOutcome(Model):
+    status: Literal["skipped", "swapped"]
+    swap_slug: str | None = Field(description="recipe eaten instead (swapped)")
+    swap_title: str | None = Field(description="title of what was eaten instead (swapped)")
+
+
 class Plan(Model):
     week: str
     days: Days
     titles: dict[str, str | None] = Field(description="slug -> title for every recipe in the plan")
+    outcomes: dict[str, dict[str, MealOutcome]] = Field(
+        description="day -> slot -> what happened, only for meals NOT cooked as planned"
+    )
+
+
+class OutcomeIn(BaseModel):
+    status: Literal["cooked", "skipped", "swapped"] = Field(description="cooked = as planned (the default)")
+    swap_slug: str | None = Field(default=None, max_length=120, description="recipe eaten instead")
+    swap_title: str | None = Field(default=None, max_length=200, description="or free text, e.g. 'pizza fuera'")
 
 
 # ---- shopping ----
@@ -151,6 +167,33 @@ class ProductIn(BaseModel):
 class ProductPick(Model):
     ingredient: str
     id: str | None
+
+
+# ---- purchases ----
+
+
+class PurchaseItem(Model):
+    name: str
+    amounts: list[Amount]
+    product_id: str | None
+    product: str | None
+    packs: int | None
+    cost: float | None
+    pantry: bool
+
+
+class Purchase(Model):
+    id: int
+    week: str
+    created_at: dt.datetime
+    people: int
+    estimated_total: float | None = Field(description="Mercadona estimate when bought (None: no prices then)")
+    actual_total: float | None = Field(description="receipt total, if entered")
+    items: list[PurchaseItem]
+
+
+class PurchasePatch(BaseModel):
+    actual_total: float | None = Field(ge=0, le=10_000, description="receipt total; null clears it")
 
 
 # ---- settings ----

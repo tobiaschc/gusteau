@@ -2,7 +2,7 @@
 
 Layout under GUSTEAU_DATA (default ./data):
     recipes/<slug>.cook
-    gusteau.db      plans, settings (SQLite; schema migrated on startup)
+    gusteau.db      plans, meal outcomes, purchases, settings (SQLite; schema migrated on startup)
     aisles.yml      ingredient -> supermarket aisle (optional)
     products.yml    your ingredient -> Mercadona product picks (override the bundled ones)
     .cache/         Mercadona responses
@@ -21,7 +21,7 @@ import unicodedata
 from pathlib import Path
 
 import yaml
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -202,16 +202,24 @@ class Store:
         return {d: dict.fromkeys(self.settings()["slots"]) for d in DAYS}
 
     def get_plan(self, week: str) -> dict:
-        """{"week", "days": {day: {slot: slug | None}}, "titles": {slug: title when planned}}"""
+        """{"week", "days": {day: {slot: slug | None}}, "titles": {slug: title when planned},
+        "outcomes": {day: {slot: {status, swap_slug, swap_title}}} (only meals not cooked as planned)}"""
         if not WEEK.match(week):
             raise KeyError(week)
         days = self._empty_days()
         titles: dict[str, str] = {}
+        outcomes: dict[str, dict[str, dict]] = {}
         with self.session() as s:
             for m in s.scalars(select(db.Meal).where(db.Meal.week == week)):
                 days.setdefault(m.day, {})[m.slot] = m.recipe_slug
                 titles[m.recipe_slug] = m.recipe_title
-        return {"week": week, "days": days, "titles": titles}
+                if m.status:
+                    outcomes.setdefault(m.day, {})[m.slot] = {
+                        "status": m.status,
+                        "swap_slug": m.swap_slug,
+                        "swap_title": m.swap_title,
+                    }
+        return {"week": week, "days": days, "titles": titles, "outcomes": outcomes}
 
     def save_plan(self, plan: dict) -> dict:
         week = plan["week"]
@@ -225,14 +233,67 @@ class Store:
                 .values(week=week, updated_at=now)
                 .on_conflict_do_update(index_elements=[db.Plan.week], set_={"updated_at": now})
             )
-            s.execute(delete(db.Meal).where(db.Meal.week == week))
+            # the upsert above took the write lock, so this read can't go stale before we write
+            existing = {(m.day, m.slot): m for m in s.scalars(select(db.Meal).where(db.Meal.week == week))}
             for day, slots in plan["days"].items():
                 for slot, slug in slots.items():
-                    if slug:
+                    meal = existing.pop((day, slot), None)
+                    if not slug:
+                        if meal:
+                            s.delete(meal)
+                    elif meal is None:
                         s.add(
                             db.Meal(week=week, day=day, slot=slot, recipe_slug=slug, recipe_title=known.get(slug, slug))
                         )
+                    elif meal.recipe_slug != slug:  # replanned: the old outcome no longer applies
+                        meal.recipe_slug, meal.recipe_title = slug, known.get(slug, slug)
+                        meal.status = meal.swap_slug = meal.swap_title = None
+            for meal in existing.values():  # slots no longer in the plan
+                s.delete(meal)
         return self.get_plan(week)
+
+    def set_outcome(self, week: str, day: str, slot: str, status: str | None, swap_slug=None, swap_title=None) -> dict:
+        """Record what happened to a planned meal. status None = cooked as planned."""
+        with self.session.begin() as s:
+            meal = s.scalar(select(db.Meal).where(db.Meal.week == week, db.Meal.day == day, db.Meal.slot == slot))
+            if meal is None:
+                raise KeyError(f"{week}/{day}/{slot}")
+            meal.status = status
+            meal.swap_slug = swap_slug if status == "swapped" else None
+            meal.swap_title = swap_title if status == "swapped" else None
+        return self.get_plan(week)
+
+    # ---- purchases ----
+
+    def add_purchase(self, week: str, people: int, estimated_total: float | None, items: list[dict]) -> db.Purchase:
+        with self.session.begin() as s:
+            if s.get(db.Plan, week) is None:
+                raise KeyError(week)
+            purchase = db.Purchase(week=week, people=people, estimated_total=estimated_total, items=items)
+            s.add(purchase)
+        return purchase
+
+    def purchases(self, week: str | None = None) -> list[db.Purchase]:
+        query = select(db.Purchase).order_by(db.Purchase.created_at)
+        if week:
+            query = query.where(db.Purchase.week == week)
+        with self.session() as s:
+            return list(s.scalars(query))
+
+    def update_purchase(self, purchase_id: int, actual_total: float | None) -> db.Purchase:
+        with self.session.begin() as s:
+            purchase = s.get(db.Purchase, purchase_id)
+            if purchase is None:
+                raise KeyError(purchase_id)
+            purchase.actual_total = actual_total
+        return purchase
+
+    def delete_purchase(self, purchase_id: int) -> None:
+        with self.session.begin() as s:
+            purchase = s.get(db.Purchase, purchase_id)
+            if purchase is None:
+                raise KeyError(purchase_id)
+            s.delete(purchase)
 
     # ---- settings & aisles ----
 
