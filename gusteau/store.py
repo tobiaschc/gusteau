@@ -5,6 +5,8 @@ Layout under GUSTEAU_DATA (default ./data):
     plans/<YYYY-Www>.json
     settings.json
     aisles.yml      ingredient -> supermarket aisle (optional)
+    products.yml    your ingredient -> Mercadona product picks (override the bundled ones)
+    .cache/         Mercadona responses
     .seeded.json    hashes of the bundled files last copied in (to sync app updates)
 """
 
@@ -24,11 +26,12 @@ from .cooklang import Recipe, parse
 
 DAYS = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
 SLOTS = ["desayuno", "comida", "cena"]
-DEFAULT_SETTINGS = {"people": 2, "slots": SLOTS}
+DEFAULT_SETTINGS = {"people": 2, "slots": SLOTS, "prices": True, "warehouse": "mad1"}
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 WEEK = re.compile(r"^\d{4}-W(0[1-9]|[1-4]\d|5[0-3])$")
 SEED = Path(__file__).resolve().parent.parent / "recipes"
 SEED_AISLES = Path(__file__).resolve().parent.parent / "aisles.yml"
+SEED_PRODUCTS = Path(__file__).resolve().parent.parent / "products.yml"
 
 
 def slugify(text: str) -> str:
@@ -175,3 +178,20 @@ class Store:
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         # file is grouped by aisle: {Frutería: [tomate, ...]} -> {tomate: Frutería}; dict order = shop order
         return {str(i).lower(): aisle for aisle, items in data.items() for i in items or []}
+
+    # ---- Mercadona products ----
+
+    def products(self) -> dict[str, str | None]:
+        """ingredient -> product id (None = not sold). User picks win over the bundled defaults."""
+        merged: dict[str, str | None] = {}
+        for path in (SEED_PRODUCTS, self.root / "products.yml"):
+            if path.exists():
+                data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+                merged |= {str(k).lower(): (str(v) if v is not None else None) for k, v in data.items()}
+        return merged
+
+    def set_product(self, ingredient: str, product_id: str | None) -> None:
+        path = self.root / "products.yml"
+        data = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}) if path.exists() else {}
+        data[ingredient.lower()] = product_id
+        path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=True), encoding="utf-8")

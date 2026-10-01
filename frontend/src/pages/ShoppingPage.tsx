@@ -1,9 +1,10 @@
-import { Check, Copy, Download, RotateCcw, ShoppingBasket } from "lucide-react"
+import { Check, Copy, Download, RotateCcw, ShoppingBasket, Store } from "lucide-react"
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/Button"
 import { Card } from "@/components/ui/Card"
 import { EmptyState, ErrorBox, Loading, PageHeader } from "@/components/ui/States"
+import { euro, ProductPicker } from "@/components/ProductPicker"
 import { WeekNav } from "@/components/WeekNav"
 import { api, type ShoppingItem } from "@/lib/api"
 import { useApp } from "@/lib/context"
@@ -15,6 +16,7 @@ export function ShoppingPage() {
   const { data, error, loading, reload } = useLoad(() => api.shopping(week, people), [week, people])
   const [checked, setChecked] = useLocalStorage<string[]>(`gusteau:checked:${week}`, [])
   const [copied, setCopied] = useState(false)
+  const [picking, setPicking] = useState<ShoppingItem | null>(null)
 
   const groups = useMemo(() => {
     const map = new Map<string, ShoppingItem[]>()
@@ -27,7 +29,17 @@ export function ShoppingPage() {
 
   const asText = () =>
     groups
-      .map(([aisle, items]) => `${aisle}\n` + items.map((i) => `- ${i.name}: ${i.amounts.map((a) => a.label).join(" + ")}`).join("\n"))
+      .map(
+        ([aisle, items]) =>
+          `${aisle}\n` +
+          items
+            .map((i) => {
+              const m = i.mercadona
+              const product = m && !m.pantry ? ` (${m.packs > 1 ? `${m.packs} × ` : ""}${m.product.name})` : ""
+              return `- ${i.name}: ${i.amounts.map((a) => a.label).join(" + ")}${product}`
+            })
+            .join("\n"),
+      )
       .join("\n\n")
 
   const copy = async () => {
@@ -38,12 +50,26 @@ export function ShoppingPage() {
 
   const total = data?.items.length ?? 0
   const done = data?.items.filter((i) => checked.includes(i.name)).length ?? 0
+  const pending = data?.items
+    .filter((i) => !checked.includes(i.name) && i.mercadona && !i.mercadona.pantry)
+    .reduce((sum, i) => sum + (i.mercadona?.cost ?? 0), 0)
 
   return (
     <>
       <PageHeader
         title="Lista de la compra"
-        subtitle={data ? `${data.meals} comidas · ${total} ingredientes · ${done} en el carro` : undefined}
+        subtitle={
+          data
+            ? [
+                `${data.meals} comidas`,
+                `${total} ingredientes`,
+                `${done} en el carro`,
+                data.total !== null && `~${euro(data.total)} en Mercadona`,
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            : undefined
+        }
       >
         <WeekNav />
       </PageHeader>
@@ -66,10 +92,18 @@ export function ShoppingPage() {
       ) : (
         data && (
           <>
+            {data.prices_error && (
+              <p className="mb-4 rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+                Sin precios de Mercadona ahora mismo: la lista funciona igual. ({data.prices_error})
+              </p>
+            )}
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <div className="h-1.5 min-w-[8rem] flex-1 overflow-hidden rounded-full bg-secondary">
                 <div className="h-full bg-brand transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
               </div>
+              {data.total !== null && done > 0 && !!pending && (
+                <span className="text-sm tabular-nums text-muted-foreground">quedan ~{euro(pending)}</span>
+              )}
               <Button variant="outline" size="sm" onClick={copy}>
                 {copied ? <Check /> : <Copy />} {copied ? "Copiada" : "Copiar"}
               </Button>
@@ -91,12 +125,13 @@ export function ShoppingPage() {
                   <ul>
                     {items.map((item) => {
                       const on = checked.includes(item.name)
+                      const m = item.mercadona
                       return (
-                        <li key={item.name}>
+                        <li key={item.name} className="rounded-md transition-colors hover:bg-accent/60">
                           <button
                             onClick={() => toggle(item.name)}
                             title={`En: ${item.recipes.join(", ")}`}
-                            className="flex w-full items-center gap-3 rounded-md px-1.5 py-2 text-left transition-colors hover:bg-accent/60"
+                            className="flex w-full items-center gap-3 px-1.5 pb-1 pt-2 text-left"
                           >
                             <span
                               className={cn(
@@ -111,6 +146,32 @@ export function ShoppingPage() {
                               {item.amounts.map((a) => a.label).join(" + ")}
                             </span>
                           </button>
+                          {data.prices_error === null && (
+                            <button
+                              onClick={() => setPicking(item)}
+                              className={cn(
+                                "flex w-full items-center gap-1.5 pb-2 pl-9 pr-1.5 text-left text-xs text-muted-foreground hover:text-foreground",
+                                on && "opacity-50",
+                              )}
+                            >
+                              <Store className="h-3 w-3 shrink-0" />
+                              {m ? (
+                                <>
+                                  <span className="min-w-0 flex-1 truncate">
+                                    {m.packs > 1 && `${m.packs} × `}
+                                    {m.product.name}
+                                    {m.pantry && " · ¿en casa?"}
+                                  </span>
+                                  <span className={cn("tabular-nums", m.pantry && "line-through decoration-muted-foreground/50")}>
+                                    {m.approx && "~"}
+                                    {euro(m.cost)}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="flex-1 italic">Elegir producto</span>
+                              )}
+                            </button>
+                          )}
                         </li>
                       )
                     })}
@@ -118,6 +179,7 @@ export function ShoppingPage() {
                 </Card>
               ))}
             </div>
+            <ProductPicker item={picking} onOpenChange={(o) => o || setPicking(null)} onSaved={reload} />
           </>
         )
       )}

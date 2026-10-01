@@ -59,6 +59,14 @@ Haz a la plancha @pechuga de pollo{150%g} con @aceite de oliva virgen extra{10%m
 - Supported Cooklang subset: front matter, ingredients, cookware (`#`), timers (`~`), comments (`--`, `[- -]`).
 - Planner tags: `habitual` (your usual dishes, proposed more often: ~5 breakfasts and 4–6 lunches/dinners a week, each main at most twice), `finde` (long recipes, Saturday/Sunday only), `legumbre` / `pescado` / `carne` (weekly balance: 3–4 / 2–3 / 2–4).
 
+## Mercadona prices
+
+The shopping list shows, per ingredient, the Mercadona product, how many packs to buy, its price and a weekly total (`~` = sold by weight, estimated). Click the product line to pick another one or mark the ingredient as not bought there.
+
+- `products.yml` maps ingredients to product ids (warehouse `mad1`, Madrid); your picks are saved to `GUSTEAU_DATA/products.yml` and win. Unmapped ingredients are auto-mapped to the first available search hit.
+- Items where the week uses under 15 % of a pack (spices, oil, vinegar) are flagged "¿en casa?" and left out of the total.
+- **Unofficial.** Mercadona has no public API: Gusteau reads the same Algolia search index the shop's website uses, with the public search-only key from its JS bundle. Read-only, cached for 24 h in `GUSTEAU_DATA/.cache/`. If it changes or blocks access, the list keeps working without prices. Turn it off with `PUT /api/settings {"prices": false}`.
+
 ## API
 
 | Method | Path                                  |                                   |
@@ -69,7 +77,9 @@ Haz a la plancha @pechuga de pollo{150%g} con @aceite de oliva virgen extra{10%m
 | GET/PUT | `/api/plans/{YYYY-Www}`              | weekly plan                       |
 | POST   | `/api/plans/{week}/generate`          | fill empty slots (`keep: false` to redo all) |
 | GET    | `/api/plans/{week}/shopping[.md]`     | shopping list (`?people=N`)       |
-| GET/PUT | `/api/settings`                      | `people`                          |
+| GET/PUT | `/api/settings`                      | `people`, `prices`                |
+| GET    | `/api/products/search?q=`             | Mercadona product search          |
+| PUT    | `/api/products/{ingredient}`          | pick product (`{"id": null}` = not at Mercadona) |
 
 ## Branding
 

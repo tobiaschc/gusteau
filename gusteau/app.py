@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from . import planner
 from .cooklang import CooklangError
+from .mercadona import Mercadona, MercadonaError, price_item
 from .shopping import format_amount, shopping_list
 from .store import WEEK, Store
 
@@ -33,6 +34,11 @@ class GenerateIn(BaseModel):
 
 class SettingsIn(BaseModel):
     people: int | None = Field(default=None, ge=1, le=20)
+    prices: bool | None = None
+
+
+class ProductIn(BaseModel):
+    id: str | None = Field(default=None, max_length=20)  # None = not sold at Mercadona
 
 
 def current_week(today: dt.date | None = None) -> str:
@@ -40,8 +46,9 @@ def current_week(today: dt.date | None = None) -> str:
     return f"{y}-W{w:02d}"
 
 
-def create_app(store: Store | None = None, static_dir: Path | None = None) -> FastAPI:
+def create_app(store: Store | None = None, static_dir: Path | None = None, shop: Mercadona | None = None) -> FastAPI:
     store = store or Store()
+    shop = shop or Mercadona(store.root / ".cache" / "mercadona.json", store.settings()["warehouse"])
     app = FastAPI(title="Gusteau", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
     def recipe_or_404(slug: str):
@@ -125,31 +132,70 @@ def create_app(store: Store | None = None, static_dir: Path | None = None) -> Fa
         return plan_view(store.save_plan(plan))
 
     @app.get("/api/plans/{week}/shopping")
-    def get_shopping(week: str, people: int | None = None):
+    def get_shopping(week: str, people: int | None = None, prices: bool = True):
         check_week(week)
         plan = store.get_plan(week)
         people = people or store.settings()["people"]
         recipes = {r.slug: r for r in store.list_recipes()}
         meals = [recipes[s] for d in plan["days"].values() for s in d.values() if s in recipes]
         items = shopping_list(meals, people, store.aisles())
-        return {
+        out = [
+            {
+                "name": i.name,
+                "aisle": i.aisle,
+                "recipes": i.recipes,
+                "amounts": [{"unit": u, "quantity": q, "label": format_amount(u, q)} for u, q in i.amounts.items()],
+                "mercadona": None,
+            }
+            for i in items
+        ]
+        result = {
             "week": week,
             "people": people,
             "meals": len(meals),
-            "items": [
-                {
-                    "name": i.name,
-                    "aisle": i.aisle,
-                    "recipes": i.recipes,
-                    "amounts": [{"unit": u, "quantity": q, "label": format_amount(u, q)} for u, q in i.amounts.items()],
-                }
-                for i in items
-            ],
+            "items": out,
+            "total": None,
+            "prices_error": None,
         }
+        if items and prices and store.settings()["prices"]:
+            try:
+                add_prices(items, out)
+                priced = [o["mercadona"] for o in out if o["mercadona"] and not o["mercadona"]["pantry"]]
+                result["total"] = round(sum(p["cost"] for p in priced), 2) if priced else None
+            except MercadonaError as e:
+                result["prices_error"] = str(e)
+        return result
+
+    def add_prices(items, out) -> None:
+        mapping = store.products()
+        ids = {}
+        for i in items:
+            pid = mapping[i.name] if i.name in mapping else shop.auto_pick(i.name)
+            if pid:
+                ids[i.name] = pid
+        products = shop.products(list(ids.values()))
+        for i, o in zip(items, out, strict=True):
+            product = products.get(ids.get(i.name, ""))
+            if product:
+                o["mercadona"] = {**price_item(i.amounts, product), "auto": i.name not in mapping}
+
+    # ---- Mercadona ----
+
+    @app.get("/api/products/search")
+    def search_products(q: str):
+        try:
+            return [asdict(p) for p in shop.search(q)]
+        except MercadonaError as e:
+            raise HTTPException(502, str(e)) from None
+
+    @app.put("/api/products/{ingredient}")
+    def set_product(ingredient: str, body: ProductIn):
+        store.set_product(ingredient, body.id)
+        return {"ingredient": ingredient.lower(), "id": body.id}
 
     @app.get("/api/plans/{week}/shopping.md", response_class=PlainTextResponse)
     def get_shopping_md(week: str, people: int | None = None):
-        data = get_shopping(week, people)
+        data = get_shopping(week, people, prices=False)
         lines = [f"# Lista de la compra · {week} · {data['people']} personas", ""]
         aisle = None
         for item in data["items"]:

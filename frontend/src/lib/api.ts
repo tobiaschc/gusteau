@@ -25,15 +25,39 @@ export type Plan = {
   titles: Record<string, string>
 }
 
+export type Product = {
+  id: string
+  name: string
+  price: number
+  size: number | null
+  size_format: string
+  units: number | null
+  approx: boolean
+  available: boolean
+  url: string
+  thumbnail: string | null
+  packaging: string | null
+}
+
+export type PricedItem = { product: Product; packs: number; cost: number; approx: boolean; pantry: boolean; auto: boolean }
+
 export type ShoppingItem = {
   name: string
   aisle: string
   recipes: string[]
   amounts: { unit: string; quantity: number; label: string }[]
+  mercadona: PricedItem | null
 }
 
-export type Shopping = { week: string; people: number; meals: number; items: ShoppingItem[] }
-export type Settings = { people: number; slots: string[] }
+export type Shopping = {
+  week: string
+  people: number
+  meals: number
+  items: ShoppingItem[]
+  total: number | null
+  prices_error: string | null
+}
+export type Settings = { people: number; slots: string[]; prices: boolean; warehouse: string }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -63,4 +87,7 @@ export const api = {
     request<Shopping>(`/plans/${week}/shopping${people ? `?people=${people}` : ""}`),
   settings: () => request<Settings>("/settings"),
   saveSettings: (s: Partial<Settings>) => request<Settings>("/settings", json("PUT", s)),
+  searchProducts: (q: string) => request<Product[]>(`/products/search?q=${encodeURIComponent(q)}`),
+  setProduct: (ingredient: string, id: string | null) =>
+    request<{ ingredient: string; id: string | null }>(`/products/${encodeURIComponent(ingredient)}`, json("PUT", { id })),
 }

@@ -22,7 +22,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY gusteau/ gusteau/
 COPY recipes/ recipes/
-COPY aisles.yml README.md ./
+COPY aisles.yml products.yml README.md ./
 COPY --from=ui /src/gusteau/static gusteau/static
 RUN uv sync --frozen --no-dev \
     && useradd --system --uid 1000 --home /app gusteau \

@@ -1,0 +1,79 @@
+# Ingredient -> Mercadona product id (warehouse mad1, Madrid).
+# Product pages: https://tienda.mercadona.es/product/<id>. Edit from the app (Lista -> product) or here.
+# `null` = not sold at Mercadona. Ingredients missing here are auto-mapped to the first sensible search hit.
+
+aceite de oliva virgen extra: "4740"  # Aceite de oliva virgen extra Hacendado
+aceitunas negras: "52734"  # Aceitunas negras sin hueso Hacendado
+aguacate: "3830"  # Aguacate
+ajo: "69297"  # Ajos morados
+alubias blancas cocidas: "26019"  # Alubia cocida blanca Hacendado
+arroz integral: "5184"  # Arroz integral largo Hacendado
+atún en conserva: "18071"  # Atún claro en aceite de oliva Hacendado
+atún fresco: "87197"  # Rodajas de atún de aleta amarilla descongelada
+bacalao desalado: "87211"  # Bacalao al punto de sal descongelado
+berenjena: "69326"  # Berenjena
+boniato: "69239"  # Batata
+brócoli: "69580"  # Brócoli
+burger de pollo: "2622"  # Burger de pollo
+calabacín: "69338"  # Calabacín verde
+calabaza: "3527"  # Calabaza cacahuete cortada a trozos
+caldo de pescado: "18499"  # Caldo de pescado con bogavante Gourmet Gallina blanca
+caldo de verduras: "18480"  # Caldo de verduras casero Gallina blanca
+canela molida: "34177"  # Canela molida Hacendado
+carne picada de pavo: "35774"  # Preparado de carne picada pollo
+cebolla: "69089"  # Cebollas
+champiñones: "26951"  # Champiñones blancos
+comino molido: "34120"  # Comino molido Hacendado
+copos de avena: "86341"  # Copos de avena Brüggen
+curry en polvo: "34125"  # Curry Hacendado
+cuscús integral: "9395"  # Cous cous mediano Hacendado
+espinacas frescas: "69730"  # Espinacas cortadas y lavadas
+espárragos verdes: "69656"  # Espárragos verdes finos
+fideos de arroz: "35981"  # Noodles de arroz Hacendado
+frutos rojos congelados: "61089"  # Mix frutos rojos Hacendado ultracongeladas
+gambas peladas: "24181"  # Gamba pelada cruda tamaño mediano Hacendado ultracongelada
+garbanzos cocidos: "26029"  # Garbanzo cocido Hacendado
+guindilla: "21552"  # Cayena guindillas Hacendado
+harina: "29100"  # Harina de trigo Hacendado
+huevos: "31504"  # Huevos grandes L
+jengibre molido: "34149"  # Jengibre molido Hacendado
+kiwi: "3820"  # Kiwi verde
+leche de coco ligera: "17174"  # Preparado de coco Hacendado
+leche semidesnatada: "10382"  # Leche semidesnatada Hacendado
+lechuga: "69122"  # Lechuga corazón romana
+lentejas cocidas: "26030"  # Lenteja cocida Hacendado
+limón: "3210"  # Limón
+lomo de vacuno añojo: "8934"  # Lomo de vacuno añojo
+manzana: "8177"  # Manzana roja dulce
+merluza: "87200"  # Porciones de merluza
+nueces: "52667"  # Nuez troceada pelada Hacendado
+orégano: "5598"  # Orégano Hacendado
+pan integral: "60354"  # Panes integrales 100% fino
+pan rallado integral: "82219"  # Pan rallado Hacendado
+patata: "69166"  # Patatas
+pechuga de pavo: "2794"  # Filetes pechuga de pavo
+pechuga de pollo: "2787"  # Filetes pechuga de pollo
+pepino: "69584"  # Pepino
+perejil fresco: "69701"  # Perejil troceado lavado
+pimentón dulce: "60573"  # Pimentón dulce Hacendado
+pimienta negra: "34171"  # Pimienta negra molida Hacendado
+pimiento rojo: "69310"  # Pimiento rojo
+pimiento verde: "69320"  # Pimiento verde freír
+plátano: "3819"  # Plátano de Canarias IGP
+queso feta: "51197"  # Queso feta mezcla Hacendado en dados
+queso fresco batido: "51071"  # Queso fresco batido desnatado 0% MG Hacendado
+quinoa: "9430"  # Quinoa Hacendado
+salmón: "87208"  # Filete de salmón
+salsa de soja baja en sal: "17360"  # Salsa de Soja Hacendado
+sardinas limpias: "87995"  # Sardina limpia descongelada
+semillas de calabaza: "34188"  # Pipas de calabaza natural Hacendado peladas
+semillas de chía: "5464"  # Semillas de chía Hacendado
+tahini: "17441"  # Pasta de sésamo Tahini Hacendado
+tomate: "69912"  # Tomate pera
+tomate pera: "69912"  # Tomate pera
+tomate triturado: "16043"  # Tomate triturado Hacendado
+tomillo: "5547"  # Tomillo Hacendado
+vinagre de vino: "4940"  # Vinagre de vino blanco Hacendado
+yogur natural: "22313"  # Yogur natural Hacendado
+zanahoria: "69669"  # Zanahorias
+lentejas rojas: null  # no las venden (oct 2026)
