@@ -6,19 +6,19 @@ from .conftest import WEEK
 def test_seeded_recipes_listed(client):
     recipes = client.get("/api/recipes").json()
     assert len(recipes) >= 9
-    assert client.get("/api/recipes/pollo-arroz-brocoli").json()["title"] == "Pollo con arroz y brócoli"
+    assert client.get("/api/recipes/pechuga-pollo-zanahoria").json()["title"] == "Pechuga de pollo con zanahoria"
 
 
 def test_recipe_crud(client):
-    src = "---\ntitle: Gazpacho\ntags: [comida]\n---\nTritura @tomate{3} con @pepino{100%g}.\n"
+    src = "---\ntitle: Ajoblanco\ntags: [comida]\n---\nTritura @tomate{3} con @pepino{100%g}.\n"
     created = client.post("/api/recipes", json={"source": src}).json()
-    assert created["slug"] == "gazpacho"
-    assert client.post("/api/recipes", json={"source": src}).json()["slug"] == "gazpacho-2"
-    r = client.put("/api/recipes/gazpacho", json={"source": src.replace("3", "4")})
+    assert created["slug"] == "ajoblanco"
+    assert client.post("/api/recipes", json={"source": src}).json()["slug"] == "ajoblanco-2"
+    r = client.put("/api/recipes/ajoblanco", json={"source": src.replace("3", "4")})
     assert r.json()["ingredients"][0]["quantity"] == 4
     assert client.post("/api/recipes", json={"source": "@{1}"}).status_code == 422
-    assert client.delete("/api/recipes/gazpacho").status_code == 204
-    assert client.get("/api/recipes/gazpacho").status_code == 404
+    assert client.delete("/api/recipes/ajoblanco").status_code == 204
+    assert client.get("/api/recipes/ajoblanco").status_code == 404
     assert client.get("/api/recipes/..%2Fsettings").status_code == 404
 
 
@@ -43,9 +43,9 @@ def test_plan_generate_and_shopping(client):
 def test_plan_put_validates_recipes(client):
     days = {"lunes": {"comida": "no-existe"}}
     assert client.put(f"/api/plans/{WEEK}", json={"days": days}).status_code == 404
-    days = {"lunes": {"comida": "pollo-arroz-brocoli", "cena": None}}
+    days = {"lunes": {"comida": "pechuga-pollo-zanahoria", "cena": None}}
     assert client.put(f"/api/plans/{WEEK}", json={"days": days}).json()["titles"] == {
-        "pollo-arroz-brocoli": "Pollo con arroz y brócoli"
+        "pechuga-pollo-zanahoria": "Pechuga de pollo con zanahoria"
     }
 
 

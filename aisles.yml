@@ -1,17 +1,21 @@
 # Supermarket aisle -> ingredients. Groups the shopping list; aisles appear in this order.
 Frutería y verdura:
-  [aguacate, ajo, berenjena, boniato, brócoli, calabacín, calabaza, cebolla, champiñones, espinacas frescas,
-   espárragos verdes, guindilla, kiwi, lechuga, limón, manzana, patata, pepino, perejil fresco, pimiento rojo,
-   pimiento verde, plátano, tomate, tomate pera, zanahoria]
+  [aguacate, ajo, berenjena, boniato, brócoli, calabacín, calabaza, cebolla, champiñones, cilantro fresco,
+   espinacas frescas, guindilla, jengibre fresco, judías verdes, lechuga, lima, limón, manzana, patata, pepino,
+   perejil fresco, pimiento rojo, pimiento verde, plátano, puerro, tomate, tomate pera, zanahoria]
 Carne y pescado:
-  [atún fresco, bacalao desalado, burger de pollo, carne picada de pavo, gambas peladas, lomo de vacuno añojo, merluza,
-   pechuga de pavo, pechuga de pollo, salmón, sardinas limpias]
-Huevos y lácteos: [huevos, leche semidesnatada, queso feta, queso fresco batido, yogur natural]
-Panadería: [pan integral, pan rallado integral]
-Congelados: [frutos rojos congelados]
+  [burger de pollo, carne picada de ternera, contramuslos de pollo, gambas peladas, jamón serrano,
+   lomo de vacuno añojo, pechuga de pollo, salmón, salmón ahumado]
+Huevos y lácteos:
+  [huevos, leche semidesnatada, mantequilla, queso crema, queso fresco batido, queso rallado, yogur natural]
+Panadería: [pan integral, tortillas de trigo integrales]
+Congelados: [edamame, guisantes congelados]
 Despensa:
-  [aceite de oliva virgen extra, aceitunas negras, alubias blancas cocidas, arroz integral, atún en conserva,
-   caldo de pescado, caldo de verduras, copos de avena, cuscús integral, fideos de arroz, garbanzos cocidos, harina,
-   leche de coco ligera, lentejas cocidas, lentejas rojas, nueces, quinoa, salsa de soja baja en sal,
-   semillas de calabaza, semillas de chía, tahini, tomate triturado, vinagre de vino]
-Especias: [canela molida, comino molido, curry en polvo, jengibre molido, orégano, pimentón dulce, pimienta negra, sal, tomillo]
+  [aceite de oliva virgen extra, aceitunas negras, arroz, arroz cocido, arroz para risotto, atún en conserva,
+   caldo de pollo, caldo de verduras, copos de avena, fideos de arroz, frijoles negros cocidos,
+   frijoles rojos cocidos, garbanzos cocidos, leche de coco ligera, lentejas cocidas, miel, nueces, pasta pequeña,
+   salsa de soja baja en sal, salsa inglesa, salsa picante, semillas de calabaza, tahini, tomate triturado,
+   ventresca de atún, vinagre de vino, vino blanco]
+Especias:
+  [canela molida, comino molido, cúrcuma molida, jengibre molido, laurel, orégano, pimentón dulce, pimienta negra,
+   sal, tomillo]

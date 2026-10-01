@@ -40,7 +40,7 @@ def test_counts_only_past_meals_and_follows_swaps(client):
     assert [(b["slug"], b["count"]) for b in s["breakfasts"]] == [(desayuno, 2)]
     assert s["meals_eaten"] == 4 + 1 + 1 + 2 and s["meals_skipped"] == 1
     never = {r["slug"] for r in s["never_eaten"]}
-    assert lentejas not in never and desayuno not in never and "merluza-salsa-verde" in never
+    assert lentejas not in never and desayuno not in never and "gazpacho" in never
 
 
 def test_period_filter(client):
