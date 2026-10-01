@@ -19,7 +19,7 @@ export function RecipesPage() {
 
   const tags = useMemo(() => {
     const all = [...new Set((data ?? []).flatMap((r) => r.tags))]
-    return all.sort((a, b) => {
+    return all.toSorted((a, b) => {
       const ia = SLOT_ORDER.indexOf(a)
       const ib = SLOT_ORDER.indexOf(b)
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b)

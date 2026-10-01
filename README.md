@@ -30,6 +30,22 @@ uv run pytest
 
 Frontend dev with hot reload: `uv run gusteau` in one shell, `cd frontend && npm run dev` in another (Vite proxies `/api` to :8000).
 
+## Develop
+
+```
+gusteau/
+  cooklang.py   parser            planner.py   weekly plan generator
+  shopping.py   list + units      mercadona.py  product search, packs, prices (unofficial)
+  store.py      data dir (atomic writes, recipe cache, seed sync)
+  api/          FastAPI routers (recipes, plans, shopping, settings) + schemas.py (the API contract)
+frontend/src/
+  pages/  components/  lib/api.ts (client) + lib/api.gen.ts (generated types)
+tests/          one file per module, shared fakes in conftest.py
+```
+
+- Checks: `uv run ruff format --check . && uv run ruff check . && uv run pytest`, and `npm run lint && npm run build` in `frontend/`.
+- After changing anything in `gusteau/api/schemas.py`, run `npm run gen:api` in `frontend/`: it regenerates `openapi.json` and the TypeScript types. Commit both generated files.
+
 Environment variables:
 
 | Variable         | Default                | Purpose                                 |

@@ -1,63 +1,16 @@
-export type RecipeSummary = {
-  slug: string
-  title: string
-  tags: string[]
-  time: string | null
-  servings: number
-  ingredients: string[]
-}
+// Types are generated from the backend's OpenAPI schema: `npm run gen:api` (see gusteau/api/openapi.py).
+import type { components } from "./api.gen"
 
-export type Segment =
-  | { type: "text"; value: string }
-  | { type: "ingredient"; name: string; quantity: number | null; unit: string }
-  | { type: "cookware"; name: string }
-  | { type: "timer"; name: string; quantity: number | null; unit: string }
-
-export type Recipe = Omit<RecipeSummary, "ingredients"> & {
-  ingredients: { name: string; quantity: number | null; unit: string }[]
-  steps: Segment[][]
-  source: string
-}
-
-export type Plan = {
-  week: string
-  days: Record<string, Record<string, string | null>>
-  titles: Record<string, string>
-}
-
-export type Product = {
-  id: string
-  name: string
-  price: number
-  size: number | null
-  size_format: string
-  units: number | null
-  approx: boolean
-  available: boolean
-  url: string
-  thumbnail: string | null
-  packaging: string | null
-}
-
-export type PricedItem = { product: Product; packs: number; cost: number; approx: boolean; pantry: boolean; auto: boolean }
-
-export type ShoppingItem = {
-  name: string
-  aisle: string
-  recipes: string[]
-  amounts: { unit: string; quantity: number; label: string }[]
-  mercadona: PricedItem | null
-}
-
-export type Shopping = {
-  week: string
-  people: number
-  meals: number
-  items: ShoppingItem[]
-  total: number | null
-  prices_error: string | null
-}
-export type Settings = { people: number; slots: string[]; prices: boolean; warehouse: string }
+type S = components["schemas"]
+export type RecipeSummary = S["RecipeSummary"]
+export type Recipe = S["RecipeDetail"]
+export type Segment = Recipe["steps"][number][number]
+export type Plan = S["Plan"]
+export type Product = S["Product"]
+export type PricedItem = S["PricedItem"]
+export type ShoppingItem = S["ShoppingItem"]
+export type Shopping = S["Shopping"]
+export type Settings = S["Settings"]
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -86,8 +39,8 @@ export const api = {
   shopping: (week: string, people?: number) =>
     request<Shopping>(`/plans/${week}/shopping${people ? `?people=${people}` : ""}`),
   settings: () => request<Settings>("/settings"),
-  saveSettings: (s: Partial<Settings>) => request<Settings>("/settings", json("PUT", s)),
+  saveSettings: (s: S["SettingsIn"]) => request<Settings>("/settings", json("PUT", s)),
   searchProducts: (q: string) => request<Product[]>(`/products/search?q=${encodeURIComponent(q)}`),
   setProduct: (ingredient: string, id: string | null) =>
-    request<{ ingredient: string; id: string | null }>(`/products/${encodeURIComponent(ingredient)}`, json("PUT", { id })),
+    request<S["ProductPick"]>(`/products/${encodeURIComponent(ingredient)}`, json("PUT", { id })),
 }

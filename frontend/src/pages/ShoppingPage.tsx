@@ -179,7 +179,7 @@ export function ShoppingPage() {
                 </Card>
               ))}
             </div>
-            <ProductPicker item={picking} onOpenChange={(o) => o || setPicking(null)} onSaved={reload} />
+            <ProductPicker key={picking?.name} item={picking} onOpenChange={(o) => o || setPicking(null)} onSaved={reload} />
           </>
         )
       )}

@@ -28,7 +28,7 @@ export function RecipePicker({
     const needle = q.trim().toLowerCase()
     return recipes
       .filter((r) => !needle || r.title.toLowerCase().includes(needle) || r.ingredients.some((i) => i.includes(needle)))
-      .sort((a, b) => Number(b.tags.includes(slot)) - Number(a.tags.includes(slot)) || a.title.localeCompare(b.title))
+      .toSorted((a, b) => Number(b.tags.includes(slot)) - Number(a.tags.includes(slot)) || a.title.localeCompare(b.title))
   }, [recipes, q, slot])
 
   return (

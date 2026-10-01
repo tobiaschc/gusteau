@@ -1,0 +1,1595 @@
+{
+  "components": {
+    "schemas": {
+      "Amount": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unit",
+          "quantity",
+          "label"
+        ],
+        "title": "Amount",
+        "type": "object"
+      },
+      "CookwareSegment": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "cookware",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ],
+        "title": "CookwareSegment",
+        "type": "object"
+      },
+      "GenerateIn": {
+        "properties": {
+          "keep": {
+            "default": true,
+            "description": "keep the slots already filled",
+            "title": "Keep",
+            "type": "boolean"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          }
+        },
+        "title": "GenerateIn",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Health": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "Ingredient": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "quantity",
+          "unit"
+        ],
+        "title": "Ingredient",
+        "type": "object"
+      },
+      "IngredientSegment": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "type": {
+            "const": "ingredient",
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name",
+          "quantity",
+          "unit"
+        ],
+        "title": "IngredientSegment",
+        "type": "object"
+      },
+      "Plan": {
+        "properties": {
+          "days": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Days",
+            "type": "object"
+          },
+          "titles": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "slug -> title for every recipe in the plan",
+            "title": "Titles",
+            "type": "object"
+          },
+          "week": {
+            "title": "Week",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week",
+          "days",
+          "titles"
+        ],
+        "title": "Plan",
+        "type": "object"
+      },
+      "PlanIn": {
+        "properties": {
+          "days": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Days",
+            "type": "object"
+          }
+        },
+        "required": [
+          "days"
+        ],
+        "title": "PlanIn",
+        "type": "object"
+      },
+      "PricedItem": {
+        "properties": {
+          "approx": {
+            "title": "Approx",
+            "type": "boolean"
+          },
+          "auto": {
+            "description": "product picked automatically, not by the user",
+            "title": "Auto",
+            "type": "boolean"
+          },
+          "cost": {
+            "title": "Cost",
+            "type": "number"
+          },
+          "packs": {
+            "title": "Packs",
+            "type": "integer"
+          },
+          "pantry": {
+            "description": "uses a small share of a pack: probably already at home",
+            "title": "Pantry",
+            "type": "boolean"
+          },
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          }
+        },
+        "required": [
+          "product",
+          "packs",
+          "cost",
+          "approx",
+          "pantry",
+          "auto"
+        ],
+        "title": "PricedItem",
+        "type": "object"
+      },
+      "Product": {
+        "properties": {
+          "approx": {
+            "title": "Approx",
+            "type": "boolean"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "packaging": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Packaging"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "size_format": {
+            "title": "Size Format",
+            "type": "string"
+          },
+          "thumbnail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "price",
+          "size",
+          "size_format",
+          "units",
+          "approx",
+          "available",
+          "url",
+          "thumbnail",
+          "packaging"
+        ],
+        "title": "Product",
+        "type": "object"
+      },
+      "ProductIn": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null = not bought at Mercadona",
+            "title": "Id"
+          }
+        },
+        "title": "ProductIn",
+        "type": "object"
+      },
+      "ProductPick": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "ingredient": {
+            "title": "Ingredient",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ingredient",
+          "id"
+        ],
+        "title": "ProductPick",
+        "type": "object"
+      },
+      "Recipe": {
+        "properties": {
+          "ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/Ingredient"
+            },
+            "title": "Ingredients",
+            "type": "array"
+          },
+          "servings": {
+            "title": "Servings",
+            "type": "integer"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "items": {
+                "discriminator": {
+                  "mapping": {
+                    "cookware": "#/components/schemas/CookwareSegment",
+                    "ingredient": "#/components/schemas/IngredientSegment",
+                    "text": "#/components/schemas/TextSegment",
+                    "timer": "#/components/schemas/TimerSegment"
+                  },
+                  "propertyName": "type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/TextSegment"
+                  },
+                  {
+                    "$ref": "#/components/schemas/IngredientSegment"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CookwareSegment"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TimerSegment"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "servings",
+          "tags",
+          "time",
+          "ingredients",
+          "steps"
+        ],
+        "title": "Recipe",
+        "type": "object"
+      },
+      "RecipeDetail": {
+        "properties": {
+          "ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/Ingredient"
+            },
+            "title": "Ingredients",
+            "type": "array"
+          },
+          "servings": {
+            "title": "Servings",
+            "type": "integer"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "items": {
+                "discriminator": {
+                  "mapping": {
+                    "cookware": "#/components/schemas/CookwareSegment",
+                    "ingredient": "#/components/schemas/IngredientSegment",
+                    "text": "#/components/schemas/TextSegment",
+                    "timer": "#/components/schemas/TimerSegment"
+                  },
+                  "propertyName": "type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/TextSegment"
+                  },
+                  {
+                    "$ref": "#/components/schemas/IngredientSegment"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CookwareSegment"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TimerSegment"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "servings",
+          "tags",
+          "time",
+          "ingredients",
+          "steps",
+          "source"
+        ],
+        "title": "RecipeDetail",
+        "type": "object"
+      },
+      "RecipeIn": {
+        "properties": {
+          "source": {
+            "description": "Cooklang text",
+            "maxLength": 50000,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "title": "RecipeIn",
+        "type": "object"
+      },
+      "RecipeSummary": {
+        "properties": {
+          "ingredients": {
+            "description": "ingredient names",
+            "items": {
+              "type": "string"
+            },
+            "title": "Ingredients",
+            "type": "array"
+          },
+          "servings": {
+            "title": "Servings",
+            "type": "integer"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "tags",
+          "time",
+          "servings",
+          "ingredients"
+        ],
+        "title": "RecipeSummary",
+        "type": "object"
+      },
+      "Settings": {
+        "properties": {
+          "people": {
+            "title": "People",
+            "type": "integer"
+          },
+          "prices": {
+            "title": "Prices",
+            "type": "boolean"
+          },
+          "slots": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "warehouse": {
+            "title": "Warehouse",
+            "type": "string"
+          }
+        },
+        "required": [
+          "people",
+          "slots",
+          "prices",
+          "warehouse"
+        ],
+        "title": "Settings",
+        "type": "object"
+      },
+      "SettingsIn": {
+        "properties": {
+          "people": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "People"
+          },
+          "prices": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prices"
+          }
+        },
+        "title": "SettingsIn",
+        "type": "object"
+      },
+      "Shopping": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ShoppingItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "meals": {
+            "title": "Meals",
+            "type": "integer"
+          },
+          "people": {
+            "title": "People",
+            "type": "integer"
+          },
+          "prices_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prices Error"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "week": {
+            "title": "Week",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week",
+          "people",
+          "meals",
+          "items",
+          "total",
+          "prices_error"
+        ],
+        "title": "Shopping",
+        "type": "object"
+      },
+      "ShoppingItem": {
+        "properties": {
+          "aisle": {
+            "title": "Aisle",
+            "type": "string"
+          },
+          "amounts": {
+            "items": {
+              "$ref": "#/components/schemas/Amount"
+            },
+            "title": "Amounts",
+            "type": "array"
+          },
+          "mercadona": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PricedItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "recipes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Recipes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "aisle",
+          "recipes",
+          "amounts",
+          "mercadona"
+        ],
+        "title": "ShoppingItem",
+        "type": "object"
+      },
+      "TextSegment": {
+        "properties": {
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "title": "TextSegment",
+        "type": "object"
+      },
+      "TimerSegment": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "type": {
+            "const": "timer",
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name",
+          "quantity",
+          "unit"
+        ],
+        "title": "TimerSegment",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Gusteau",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/plans/current": {
+      "get": {
+        "operationId": "get_current_plan_api_plans_current_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Current Plan",
+        "tags": [
+          "plans"
+        ]
+      }
+    },
+    "/api/plans/{week}": {
+      "get": {
+        "operationId": "get_plan_api_plans__week__get",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Plan",
+        "tags": [
+          "plans"
+        ]
+      },
+      "put": {
+        "operationId": "put_plan_api_plans__week__put",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Plan",
+        "tags": [
+          "plans"
+        ]
+      }
+    },
+    "/api/plans/{week}/generate": {
+      "post": {
+        "operationId": "generate_plan_api_plans__week__generate_post",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate Plan",
+        "tags": [
+          "plans"
+        ]
+      }
+    },
+    "/api/plans/{week}/shopping": {
+      "get": {
+        "operationId": "get_shopping_api_plans__week__shopping_get",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "people",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "People"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shopping"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Shopping",
+        "tags": [
+          "shopping"
+        ]
+      }
+    },
+    "/api/plans/{week}/shopping.md": {
+      "get": {
+        "operationId": "get_shopping_md_api_plans__week__shopping_md_get",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "people",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "People"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Shopping Md",
+        "tags": [
+          "shopping"
+        ]
+      }
+    },
+    "/api/products/search": {
+      "get": {
+        "operationId": "search_products_api_products_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  },
+                  "title": "Response Search Products Api Products Search Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Products",
+        "tags": [
+          "shopping",
+          "mercadona"
+        ]
+      }
+    },
+    "/api/products/{ingredient}": {
+      "put": {
+        "operationId": "set_product_api_products__ingredient__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ingredient",
+            "required": true,
+            "schema": {
+              "title": "Ingredient",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductPick"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Product",
+        "tags": [
+          "shopping",
+          "mercadona"
+        ]
+      }
+    },
+    "/api/recipes": {
+      "get": {
+        "operationId": "list_recipes_api_recipes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RecipeSummary"
+                  },
+                  "title": "Response List Recipes Api Recipes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Recipes",
+        "tags": [
+          "recipes"
+        ]
+      },
+      "post": {
+        "operationId": "create_recipe_api_recipes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Recipe",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/api/recipes/{slug}": {
+      "delete": {
+        "operationId": "delete_recipe_api_recipes__slug__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Recipe",
+        "tags": [
+          "recipes"
+        ]
+      },
+      "get": {
+        "operationId": "get_recipe_api_recipes__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Recipe",
+        "tags": [
+          "recipes"
+        ]
+      },
+      "put": {
+        "operationId": "update_recipe_api_recipes__slug__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Recipe",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "operationId": "get_settings_api_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Settings",
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "put_settings_api_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Settings",
+        "tags": [
+          "settings"
+        ]
+      }
+    }
+  }
+}

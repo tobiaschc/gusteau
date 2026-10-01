@@ -46,7 +46,7 @@ export function PlanPage() {
   const filled = data ? Object.values(data.days).flatMap(Object.values).filter(Boolean).length : 0
   const total = data ? Object.values(data.days).flatMap(Object.values).length : 0
   const monday = weekMonday(week)
-  const today = new Date()
+  const [today] = useState(() => new Date())
 
   return (
     <>

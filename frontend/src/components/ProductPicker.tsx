@@ -28,14 +28,10 @@ export function ProductPicker({
   onOpenChange: (open: boolean) => void
   onSaved: () => void
 }) {
-  const [q, setQ] = useState("")
+  const [q, setQ] = useState(item?.name ?? "")
   const [results, setResults] = useState<Product[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    if (item) setQ(item.name)
-  }, [item])
 
   useEffect(() => {
     const needle = q.trim()
