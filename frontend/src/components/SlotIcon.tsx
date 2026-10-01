@@ -2,9 +2,10 @@ import { Coffee, Moon, Salad, Utensils } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const STYLES: Record<string, { icon: typeof Coffee; cls: string }> = {
-  desayuno: { icon: Coffee, cls: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" },
-  comida: { icon: Salad, cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400" },
-  cena: { icon: Moon, cls: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-400" },
+  // the ratatouille's vegetables: yellow squash, courgette, aubergine
+  desayuno: { icon: Coffee, cls: "bg-amber-200/60 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300" },
+  comida: { icon: Salad, cls: "bg-lime-200/60 text-lime-800 dark:bg-lime-400/15 dark:text-lime-300" },
+  cena: { icon: Moon, cls: "bg-purple-200/60 text-purple-800 dark:bg-purple-400/15 dark:text-purple-300" },
 }
 
 export function slotOf(tags: string[]): string | null {

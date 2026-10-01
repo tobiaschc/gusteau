@@ -3,60 +3,65 @@
 @tailwind utilities;
 
 @layer base {
+  /* Ratatouille palette.
+     Light, "la cocina de Gusteau": warm parchment walls, copper-pot light, Paris-night navy for actions.
+     Dark, "París de noche": navy sky over the rooftops, saffron lamplight, tomato red.
+     Slot colours come from the dish itself: courgette, aubergine, yellow squash. */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    /* Bistro palette: Gusteau's burgundy, brass gold and a warm cream. */
-    --brand: 354 62% 36%;
+    --background: 40 45% 96%;
+    --foreground: 222 32% 14%;
+    --card: 42 60% 99%;
+    --card-foreground: 222 32% 14%;
+    --popover: 42 60% 99%;
+    --popover-foreground: 222 32% 14%;
+    --primary: 222 42% 20%;
+    --primary-foreground: 42 60% 97%;
+    --secondary: 38 38% 90%;
+    --secondary-foreground: 222 32% 18%;
+    --muted: 38 38% 90%;
+    --muted-foreground: 25 14% 38%;
+    --accent: 36 45% 88%;
+    --accent-foreground: 222 32% 14%;
+    --destructive: 2 70% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 36 28% 83%;
+    --input: 36 28% 80%;
+    --ring: 222 42% 20%;
+    --brand: 356 64% 38%;
     --brand-foreground: 0 0% 100%;
-    --gold: 38 60% 40%;
-    --cream: 38 45% 96%;
-    --cream-foreground: 354 40% 22%;
+    --gold: 36 78% 40%;
+    --cream: 42 70% 92%;
+    --cream-foreground: 356 40% 24%;
+    --sidebar: 38 42% 92%;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --brand: 355 68% 62%;
-    --brand-foreground: 240 10% 3.9%;
-    --gold: 38 70% 58%;
-    --cream: 20 14% 9%;
-    --cream-foreground: 36 45% 88%;
+    --background: 224 38% 9%;
+    --foreground: 40 45% 92%;
+    --card: 224 32% 12%;
+    --card-foreground: 40 45% 92%;
+    --popover: 224 32% 12%;
+    --popover-foreground: 40 45% 92%;
+    --primary: 40 82% 62%;
+    --primary-foreground: 224 38% 10%;
+    --secondary: 224 26% 18%;
+    --secondary-foreground: 40 45% 92%;
+    --muted: 224 26% 18%;
+    --muted-foreground: 36 18% 66%;
+    --accent: 224 26% 20%;
+    --accent-foreground: 40 45% 94%;
+    --destructive: 2 65% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 224 24% 20%;
+    --input: 224 24% 22%;
+    --ring: 40 82% 62%;
+    --brand: 6 72% 62%;
+    --brand-foreground: 224 38% 9%;
+    --gold: 40 82% 62%;
+    --cream: 224 30% 14%;
+    --cream-foreground: 40 50% 88%;
+    --sidebar: 224 36% 7%;
   }
 
   * { @apply border-border; }

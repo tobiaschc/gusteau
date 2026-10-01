@@ -57,8 +57,8 @@ export function Layout() {
   return (
     <div className="flex min-h-dvh">
       {/* Sidebar (desktop) */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-gray-200 bg-background dark:border-gray-800 md:flex">
-        <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r bg-sidebar md:flex">
+        <div className="flex items-center justify-between border-b p-4">
           <Logo />
           <ThemeButton />
         </div>
@@ -72,7 +72,7 @@ export function Layout() {
                 cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-secondary text-foreground [&>svg]:text-brand"
+                    ? "bg-card text-foreground shadow-sm ring-1 ring-border [&>svg]:text-brand"
                     : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
                 )
               }
@@ -82,7 +82,7 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="space-y-2 border-t border-gray-200 p-4 dark:border-gray-800">
+        <div className="space-y-2 border-t p-4">
           <p className="text-xs font-medium text-muted-foreground">Personas</p>
           <PeopleStepper className="w-fit" />
           <div className="pt-3">
@@ -93,7 +93,7 @@ export function Layout() {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-background/80 px-4 py-3 backdrop-blur dark:border-gray-800 md:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/80 px-4 py-3 backdrop-blur md:hidden">
           <Logo />
           <div className="flex items-center gap-1">
             <PeopleStepper />
