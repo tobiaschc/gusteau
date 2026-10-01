@@ -59,3 +59,37 @@ def test_shopping_without_mercadona(tmp_path):
     assert c.get("/api/products/search", params={"q": "pan"}).status_code == 502
     with pytest.raises(MercadonaError):
         Mercadona(tmp_path / "c2.json", fetch=down).search("pan")
+
+
+def test_pantry_answers_and_cart_are_shared(client):
+    week = {"lunes": {"desayuno": "tortilla-francesa-pan", "comida": None, "cena": "solomillo-pure-patata"}}
+    client.put(f"/api/plans/{WEEK}", json={"days": week})
+    url = f"/api/plans/{WEEK}/shopping"
+    base = client.get(url).json()
+    items = {i["name"]: i for i in base["items"]}
+    oil = items["aceite de oliva virgen extra"]
+    assert oil["pantry"] and oil["at_home"] is None and not oil["in_cart"]
+    assert items["sal"]["pantry"]  # "al gusto", no product: still asked
+
+    # "me falta": it joins the list and the total
+    r = client.patch(f"{url}/Aceite de oliva virgen extra", json={"at_home": False})
+    assert r.json() == {"ingredient": "aceite de oliva virgen extra", "in_cart": False, "at_home": False}
+    after = client.get(url).json()
+    assert after["total"] == pytest.approx(base["total"] + oil["mercadona"]["cost"])
+    assert "aceite de oliva" in client.get(f"{url}.md").text
+    assert "- [ ] sal" not in client.get(f"{url}.md").text  # unanswered pantry items stay out of the copy
+
+    # "lo tengo" and ticking another line, then clearing the cart keeps the answers
+    client.patch(f"{url}/aceite de oliva virgen extra", json={"at_home": True})
+    client.patch(f"{url}/huevos", json={"in_cart": True})
+    items = {i["name"]: i for i in client.get(url).json()["items"]}
+    assert items["aceite de oliva virgen extra"]["at_home"] is True and items["huevos"]["in_cart"]
+    assert client.get(url).json()["total"] == pytest.approx(base["total"])
+    assert client.delete(f"{url}/cart").status_code == 204
+    items = {i["name"]: i for i in client.get(url).json()["items"]}
+    assert not items["huevos"]["in_cart"] and items["aceite de oliva virgen extra"]["at_home"] is True
+
+    # undo: back to defaults leaves no row behind
+    client.patch(f"{url}/aceite de oliva virgen extra", json={"at_home": None})
+    assert client.app.state.store.shopping_marks(WEEK) == {}
+    assert client.patch("/api/plans/2030-W01/shopping/sal", json={"in_cart": True}).status_code == 404

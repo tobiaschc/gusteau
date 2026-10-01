@@ -41,6 +41,9 @@ export const api = {
   generate: (week: string, keep: boolean) => request<Plan>(`/plans/${week}/generate`, json("POST", { keep })),
   shopping: (week: string, people?: number) =>
     request<Shopping>(`/plans/${week}/shopping${people ? `?people=${people}` : ""}`),
+  mark: (week: string, ingredient: string, m: S["MarkIn"]) =>
+    request<S["Mark"]>(`/plans/${week}/shopping/${encodeURIComponent(ingredient)}`, json("PATCH", m)),
+  clearCart: (week: string) => request<void>(`/plans/${week}/shopping/cart`, { method: "DELETE" }),
   setOutcome: (week: string, day: string, slot: string, o: S["OutcomeIn"]) =>
     request<Plan>(`/plans/${week}/meals/${day}/${slot}/outcome`, json("PUT", o)),
   purchases: (week?: string) => request<Purchase[]>(`/purchases${week ? `?week=${week}` : ""}`),

@@ -149,6 +149,9 @@ class ShoppingItem(Model):
     recipes: list[str]
     amounts: list[Amount]
     mercadona: PricedItem | None = None
+    pantry: bool = Field(default=False, description="usually already at home: asked instead of listed")
+    in_cart: bool = False
+    at_home: bool | None = Field(default=None, description="pantry answer: true = have it, false = buy it")
 
 
 class Shopping(Model):
@@ -158,6 +161,19 @@ class Shopping(Model):
     items: list[ShoppingItem]
     total: float | None = None
     prices_error: str | None = None
+
+
+class MarkIn(BaseModel):
+    """Only the fields sent are changed."""
+
+    in_cart: bool | None = None
+    at_home: bool | None = Field(default=None, description="null = unanswered again")
+
+
+class Mark(Model):
+    ingredient: str
+    in_cart: bool
+    at_home: bool | None
 
 
 class ProductIn(BaseModel):

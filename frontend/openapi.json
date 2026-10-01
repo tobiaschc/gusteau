@@ -195,6 +195,66 @@
         "title": "IngredientSegment",
         "type": "object"
       },
+      "Mark": {
+        "properties": {
+          "at_home": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At Home"
+          },
+          "in_cart": {
+            "title": "In Cart",
+            "type": "boolean"
+          },
+          "ingredient": {
+            "title": "Ingredient",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ingredient",
+          "in_cart",
+          "at_home"
+        ],
+        "title": "Mark",
+        "type": "object"
+      },
+      "MarkIn": {
+        "description": "Only the fields sent are changed.",
+        "properties": {
+          "at_home": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null = unanswered again",
+            "title": "At Home"
+          },
+          "in_cart": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Cart"
+          }
+        },
+        "title": "MarkIn",
+        "type": "object"
+      },
       "MealOutcome": {
         "properties": {
           "status": {
@@ -1116,6 +1176,23 @@
             "title": "Amounts",
             "type": "array"
           },
+          "at_home": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "pantry answer: true = have it, false = buy it",
+            "title": "At Home"
+          },
+          "in_cart": {
+            "default": false,
+            "title": "In Cart",
+            "type": "boolean"
+          },
           "mercadona": {
             "anyOf": [
               {
@@ -1130,6 +1207,12 @@
             "title": "Name",
             "type": "string"
           },
+          "pantry": {
+            "default": false,
+            "description": "usually already at home: asked instead of listed",
+            "title": "Pantry",
+            "type": "boolean"
+          },
           "recipes": {
             "items": {
               "type": "string"
@@ -1143,7 +1226,10 @@
           "aisle",
           "recipes",
           "amounts",
-          "mercadona"
+          "mercadona",
+          "pantry",
+          "in_cart",
+          "at_home"
         ],
         "title": "ShoppingItem",
         "type": "object"
@@ -1859,6 +1945,115 @@
           }
         },
         "summary": "Get Shopping Md",
+        "tags": [
+          "shopping"
+        ]
+      }
+    },
+    "/api/plans/{week}/shopping/cart": {
+      "delete": {
+        "operationId": "clear_cart_api_plans__week__shopping_cart_delete",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clear Cart",
+        "tags": [
+          "shopping"
+        ]
+      }
+    },
+    "/api/plans/{week}/shopping/{ingredient}": {
+      "patch": {
+        "description": "Tick a line (in the cart) or answer \"¿en casa?\"; shared by everyone using the app.",
+        "operationId": "mark_item_api_plans__week__shopping__ingredient__patch",
+        "parameters": [
+          {
+            "description": "ISO week YYYY-Www",
+            "in": "path",
+            "name": "week",
+            "required": true,
+            "schema": {
+              "description": "ISO week YYYY-Www",
+              "examples": [
+                "2026-W40"
+              ],
+              "pattern": "^\\d{4}-W(0[1-9]|[1-4]\\d|5[0-3])$",
+              "title": "Week",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ingredient",
+            "required": true,
+            "schema": {
+              "title": "Ingredient",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Mark"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Item",
         "tags": [
           "shopping"
         ]

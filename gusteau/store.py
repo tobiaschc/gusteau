@@ -21,7 +21,7 @@ import unicodedata
 from pathlib import Path
 
 import yaml
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -269,6 +269,36 @@ class Store:
             meal.swap_slug = swap_slug if status == "swapped" else None
             meal.swap_title = swap_title if status == "swapped" else None
         return self.get_plan(week)
+
+    # ---- shopping-list marks (shared between devices) ----
+
+    def shopping_marks(self, week: str) -> dict[str, db.ShoppingMark]:
+        with self.session() as s:
+            return {m.ingredient: m for m in s.scalars(select(db.ShoppingMark).where(db.ShoppingMark.week == week))}
+
+    def set_shopping_mark(self, week: str, ingredient: str, **fields: bool | None) -> db.ShoppingMark:
+        """Update one line's marks (`in_cart`, `at_home`); fields left out keep their value."""
+        with self.session.begin() as s:
+            if s.get(db.Plan, week) is None:
+                raise KeyError(week)
+            mark = s.get(db.ShoppingMark, (week, ingredient))
+            stored = mark is not None
+            if not stored:
+                mark = db.ShoppingMark(week=week, ingredient=ingredient, in_cart=False, at_home=None)
+            for key, value in fields.items():
+                setattr(mark, key, value)
+            at_default = not mark.in_cart and mark.at_home is None
+            if stored and at_default:  # back to defaults: drop the row
+                s.delete(mark)
+            elif not stored and not at_default:
+                s.add(mark)
+        return mark
+
+    def clear_cart(self, week: str) -> None:
+        """Untick every line; the "¿en casa?" answers stay."""
+        with self.session.begin() as s:
+            s.execute(update(db.ShoppingMark).where(db.ShoppingMark.week == week).values(in_cart=False))
+            s.execute(delete(db.ShoppingMark).where(db.ShoppingMark.week == week, db.ShoppingMark.at_home.is_(None)))
 
     # ---- purchases ----
 

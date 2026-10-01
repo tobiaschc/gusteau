@@ -144,6 +144,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/plans/{week}/shopping/cart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Clear Cart */
+        delete: operations["clear_cart_api_plans__week__shopping_cart_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plans/{week}/shopping/{ingredient}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Mark Item
+         * @description Tick a line (in the cart) or answer "¿en casa?"; shared by everyone using the app.
+         */
+        patch: operations["mark_item_api_plans__week__shopping__ingredient__patch"];
+        trace?: never;
+    };
     "/api/products/search": {
         parameters: {
             query?: never;
@@ -368,6 +405,28 @@ export interface components {
             type: "ingredient";
             /** Unit */
             unit: string;
+        };
+        /** Mark */
+        Mark: {
+            /** At Home */
+            at_home: boolean | null;
+            /** In Cart */
+            in_cart: boolean;
+            /** Ingredient */
+            ingredient: string;
+        };
+        /**
+         * MarkIn
+         * @description Only the fields sent are changed.
+         */
+        MarkIn: {
+            /**
+             * At Home
+             * @description null = unanswered again
+             */
+            at_home?: boolean | null;
+            /** In Cart */
+            in_cart?: boolean | null;
         };
         /** MealOutcome */
         MealOutcome: {
@@ -673,9 +732,25 @@ export interface components {
             aisle: string;
             /** Amounts */
             amounts: components["schemas"]["Amount"][];
+            /**
+             * At Home
+             * @description pantry answer: true = have it, false = buy it
+             */
+            at_home: boolean | null;
+            /**
+             * In Cart
+             * @default false
+             */
+            in_cart: boolean;
             mercadona: components["schemas"]["PricedItem"] | null;
             /** Name */
             name: string;
+            /**
+             * Pantry
+             * @description usually already at home: asked instead of listed
+             * @default false
+             */
+            pantry: boolean;
             /** Recipes */
             recipes: string[];
         };
@@ -1049,6 +1124,73 @@ export interface operations {
                 };
                 content: {
                     "text/plain": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_cart_api_plans__week__shopping_cart_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ISO week YYYY-Www */
+                week: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_item_api_plans__week__shopping__ingredient__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ISO week YYYY-Www */
+                week: string;
+                ingredient: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Mark"];
                 };
             };
             /** @description Validation Error */

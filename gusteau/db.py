@@ -16,6 +16,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     Engine,
     Float,
@@ -105,6 +106,19 @@ class Purchase(Base):
     estimated_total: Mapped[float | None] = mapped_column(Float)  # Mercadona estimate (None: no prices then)
     actual_total: Mapped[float | None] = mapped_column(Float, default=None)  # from the receipt, if entered
     items: Mapped[list] = mapped_column(JSON)  # [{name, amounts, product_id, product, packs, cost, pantry}]
+
+
+class ShoppingMark(Base):
+    """Shared state of one shopping-list line for a week. A row only exists while some
+    field differs from its default (not in the cart, pantry question unanswered)."""
+
+    __tablename__ = "shopping_marks"
+
+    week: Mapped[str] = mapped_column(ForeignKey("plans.week", ondelete="CASCADE"), primary_key=True)
+    ingredient: Mapped[str] = mapped_column(String(120), primary_key=True)
+    in_cart: Mapped[bool] = mapped_column(Boolean, default=False)
+    # for "¿en casa?" items: True = we have it (hide), False = we're out (buy it), None = unanswered
+    at_home: Mapped[bool | None] = mapped_column(Boolean, default=None)
 
 
 def make_engine(path: Path) -> Engine:

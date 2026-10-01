@@ -11,6 +11,8 @@ from ..store import Store
 from .deps import ShopDep, StoreDep, Week
 from .schemas import (
     Amount,
+    Mark,
+    MarkIn,
     PricedItem,
     Product,
     ProductIn,
@@ -50,7 +52,19 @@ def build_shopping(store: Store, shop: Mercadona | None, week: str, people: int 
             _add_prices(store, shop, items, out)
         except MercadonaError as e:
             out.prices_error = str(e)
+    marks = store.shopping_marks(week)
+    for row in out.items:
+        row.pantry = bool(row.mercadona and row.mercadona.pantry) or (row.mercadona is None and is_pantry(row.amounts))
+        if mark := marks.get(row.name):
+            row.in_cart, row.at_home = mark.in_cart, mark.at_home
+    priced = [r.mercadona for r in out.items if r.mercadona and (not r.pantry or r.at_home is False)]
+    out.total = round(sum(p.cost for p in priced), 2) if priced else None
     return out
+
+
+def is_pantry(amounts: list[Amount]) -> bool:
+    """Without a product to compare against: only "to taste" ingredients (salt, pepper)."""
+    return all(a.unit == "" for a in amounts)
 
 
 def _add_prices(store: Store, shop: Mercadona, items: list[Item], out: Shopping) -> None:
@@ -67,13 +81,26 @@ def _add_prices(store: Store, shop: Mercadona, items: list[Item], out: Shopping)
             row.mercadona = PricedItem.model_validate(
                 {**price_item(item.amounts, product), "auto": item.name not in mapping}
             )
-    priced = [row.mercadona for row in out.items if row.mercadona and not row.mercadona.pantry]
-    out.total = round(sum(p.cost for p in priced), 2) if priced else None
 
 
 @router.get("/plans/{week}/shopping", response_model=Shopping)
 def get_shopping(week: Week, store: StoreDep, shop: ShopDep, people: int | None = None):
     return build_shopping(store, shop, week, people)
+
+
+@router.patch("/plans/{week}/shopping/{ingredient}", response_model=Mark)
+def mark_item(week: Week, ingredient: str, body: MarkIn, store: StoreDep):
+    """Tick a line (in the cart) or answer "¿en casa?"; shared by everyone using the app."""
+    try:
+        mark = store.set_shopping_mark(week, ingredient.lower(), **body.model_dump(exclude_unset=True))
+    except KeyError:
+        raise HTTPException(404, "semana sin plan") from None
+    return Mark(ingredient=mark.ingredient, in_cart=mark.in_cart, at_home=mark.at_home)
+
+
+@router.delete("/plans/{week}/shopping/cart", status_code=204)
+def clear_cart(week: Week, store: StoreDep) -> None:
+    store.clear_cart(week)
 
 
 @router.get("/plans/{week}/shopping.md", response_class=PlainTextResponse)
@@ -82,6 +109,8 @@ def get_shopping_md(week: Week, store: StoreDep, people: int | None = None) -> s
     lines = [f"# Lista de la compra · {week} · {data.people} personas", ""]
     aisle = None
     for item in data.items:
+        if item.pantry and item.at_home is not False:  # at home, or still to check
+            continue
         if item.aisle != aisle:
             aisle = item.aisle
             lines += ["", f"## {aisle}"]
@@ -119,7 +148,7 @@ def create_purchase(week: Week, store: StoreDep, shop: ShopDep, people: int | No
             "product": i.mercadona.product.name if i.mercadona else None,
             "packs": i.mercadona.packs if i.mercadona else None,
             "cost": i.mercadona.cost if i.mercadona else None,
-            "pantry": bool(i.mercadona and i.mercadona.pantry),
+            "pantry": i.pantry and i.at_home is not False,  # not bought: we had it (or never said)
         }
         for i in data.items
     ]
