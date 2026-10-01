@@ -1,6 +1,7 @@
 from itertools import pairwise
 
 import pytest
+import yaml
 from fastapi.testclient import TestClient
 
 from gusteau.app import create_app
@@ -50,11 +51,16 @@ def test_parse_errors(bad):
 
 
 def test_bundled_recipes_parse():
-    from gusteau.store import SEED
+    from gusteau.store import SEED, SEED_AISLES
 
+    known = {str(i) for items in yaml.safe_load(SEED_AISLES.read_text()).values() for i in items}
+    missing = set()
     for path in SEED.glob("*.cook"):
         r = parse(path.read_text(), path.stem)
         assert r.ingredients and r.tags, path.name
+        assert {"desayuno", "comida", "cena"} & set(r.tags), f"{path.name}: no slot tag"
+        missing |= {i.name for i in r.ingredients} - known
+    assert not missing, f"ingredients without aisle in aisles.yml: {sorted(missing)}"
 
 
 # ---------- shopping ----------
@@ -109,6 +115,24 @@ def test_generate_respects_slot_tags_and_avoids_consecutive_repeats():
         assert d["comida"] != d["cena"]
     out2 = generate(out, recipes, keep=False, seed=2)
     assert all(v for d in out2["days"].values() for v in d.values())
+
+
+def test_generate_balances_proteins_and_keeps_finde_for_weekend(tmp_path):
+    from gusteau.planner import BALANCE
+
+    store = Store(tmp_path)
+    recipes = store.list_recipes()
+    tags = {r.slug: r.tags for r in recipes}
+    weekend_only = {r.slug for r in recipes if "finde" in r.tags}
+    assert weekend_only  # the bundled bank has at least one long weekend recipe
+    for seed in range(5):
+        days = generate(store.get_plan(WEEK), recipes, keep=False, seed=seed)["days"]
+        counts = {t: sum(t in tags[d[s]] for d in days.values() for s in ("comida", "cena")) for t in BALANCE}
+        for tag, (lo, hi) in BALANCE.items():
+            assert lo - 1 <= counts[tag] <= hi + 1, (seed, counts)
+        for day, slots in days.items():
+            if day not in ("sabado", "domingo"):
+                assert not weekend_only & set(slots.values()), (seed, day)
 
 
 # ---------- store & API ----------

@@ -1,6 +1,17 @@
-# Supermarket aisle -> ingredients. Used only to group the shopping list.
-Frutería y verdura: [brócoli, calabacín, cebolla, lechuga, manzana, patata, pepino, pimiento rojo, plátano, tomate, zanahoria]
-Carne y pescado: [pechuga de pollo, merluza, salmón]
-Huevos y lácteos: [huevos, leche semidesnatada, yogur natural]
-Panadería: [pan integral]
-Despensa: [aceite de oliva virgen extra, arroz integral, atún en conserva, canela molida, copos de avena, garbanzos cocidos, lentejas cocidas, nueces]
+# Supermarket aisle -> ingredients. Groups the shopping list; aisles appear in this order.
+Frutería y verdura:
+  [aguacate, ajo, berenjena, boniato, brócoli, calabacín, calabaza, cebolla, champiñones, espinacas frescas,
+   espárragos verdes, guindilla, kiwi, lechuga, limón, manzana, patata, pepino, perejil fresco, pimiento rojo,
+   pimiento verde, plátano, tomate, tomate pera, zanahoria]
+Carne y pescado:
+  [atún fresco, bacalao desalado, carne picada de pavo, gambas peladas, merluza, pechuga de pavo, pechuga de pollo,
+   salmón, sardinas limpias]
+Huevos y lácteos: [huevos, leche semidesnatada, queso feta, queso fresco batido, yogur natural]
+Panadería: [pan integral, pan rallado integral]
+Congelados: [frutos rojos congelados]
+Despensa:
+  [aceite de oliva virgen extra, aceitunas negras, alubias blancas cocidas, arroz integral, atún en conserva,
+   caldo de pescado, caldo de verduras, copos de avena, cuscús integral, fideos de arroz, garbanzos cocidos, harina,
+   leche de coco ligera, lentejas cocidas, lentejas rojas, nueces, quinoa, salsa de soja baja en sal,
+   semillas de calabaza, semillas de chía, tahini, tomate triturado, vinagre de vino]
+Especias: [canela molida, comino molido, curry en polvo, jengibre molido, orégano, pimentón dulce, pimienta negra, sal, tomillo]
