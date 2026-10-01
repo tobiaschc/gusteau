@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv sync --frozen
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+      - name: API schema is up to date (run `npm run gen:api` in frontend/)
+        run: |
+          uv run python -m gusteau.api.openapi > frontend/openapi.json
+          git diff --exit-code frontend/openapi.json
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Generated API types are up to date
+        run: |
+          npx --yes openapi-typescript@7.13.0 openapi.json -o src/lib/api.gen.ts
+          git diff --exit-code src/lib/api.gen.ts
+      - run: npm run lint
+      - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Image builds and serves /api/health
+        run: |
+          docker build -t gusteau:ci .
+          docker run -d --name gusteau-ci -p 8000:8000 gusteau:ci
+          for i in $(seq 1 30); do curl -fs localhost:8000/api/health && exit 0; sleep 1; done
+          docker logs gusteau-ci; exit 1

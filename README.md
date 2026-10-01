@@ -43,8 +43,8 @@ frontend/src/
 tests/          one file per module, shared fakes in conftest.py
 ```
 
-- Checks: `uv run ruff format --check . && uv run ruff check . && uv run pytest`, and `npm run lint && npm run build` in `frontend/`.
-- After changing anything in `gusteau/api/schemas.py`, run `npm run gen:api` in `frontend/`: it regenerates `openapi.json` and the TypeScript types. Commit both generated files.
+- Checks: `uv run ruff format --check . && uv run ruff check . && uv run pytest`, and `npm run lint && npm run build` in `frontend/`. CI (`.github/workflows/ci.yml`) runs them all and builds the Docker image.
+- After changing anything in `gusteau/api/schemas.py`, run `npm run gen:api` in `frontend/`: it regenerates `openapi.json` and the TypeScript types. Commit both generated files; CI fails if they are stale.
 
 Environment variables:
 
