@@ -6,15 +6,18 @@ A minimalist bank of healthy recipes plus a weekly planner that tells you what t
 
 - Recipes are plain [Cooklang](https://cooklang.org) files (`recipes/*.cook`), written for 1 serving.
 - A weekly plan (breakfast, lunch, dinner) is generated from the bank or filled in by hand.
-- The shopping list adds up every ingredient in the plan, scaled to the number of people (default 2), grouped by aisle.
+- The shopping list adds up every ingredient in the plan, scaled to the number of people (default 2), grouped by aisle in the order of `aisles.yml`.
 
 ## Run
 
 ```bash
+(cd frontend && npm ci && npm run build)   # builds the UI into gusteau/static
 uv sync
-uv run gusteau                 # http://localhost:8000, API docs at /api/docs
+uv run gusteau                             # http://localhost:8000, API docs at /api/docs
 uv run pytest
 ```
+
+Frontend dev with hot reload: `uv run gusteau` in one shell, `cd frontend && npm run dev` in another (Vite proxies `/api` to :8000).
 
 Environment variables:
 
