@@ -1,4 +1,4 @@
-import { Clock, Plus, Search } from "lucide-react"
+import { Clock, Plus, Search, SearchX } from "lucide-react"
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { SlotIcon, slotOf } from "@/components/SlotIcon"
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
 import { Card } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
-import { ErrorBox, Loading, PageHeader } from "@/components/ui/States"
+import { EmptyState, ErrorBox, Loading, PageHeader } from "@/components/ui/States"
 import { api } from "@/lib/api"
 import { useLoad } from "@/lib/hooks"
 
@@ -101,7 +101,26 @@ export function RecipesPage() {
             </Link>
           ))}
           {list.length === 0 && data && (
-            <p className="col-span-full py-12 text-center text-sm text-muted-foreground">Ninguna receta coincide.</p>
+            <EmptyState
+              icon={SearchX}
+              className="col-span-full"
+              title={data.length ? "Ni Remy lo encuentra" : "El banco de recetas está vacío"}
+              action={
+                data.length ? (
+                  <Button variant="outline" onClick={() => { setQ(""); setTag(null) }}>
+                    Limpiar búsqueda
+                  </Button>
+                ) : (
+                  <Link to="/recipes/new">
+                    <Button variant="brand"><Plus /> Nueva receta</Button>
+                  </Link>
+                )
+              }
+            >
+              {data.length
+                ? "Ninguna receta coincide. Prueba con otro ingrediente: la imaginación es el único límite."
+                : "Cualquiera puede cocinar: empieza por tu primera receta."}
+            </EmptyState>
           )}
         </div>
       )}

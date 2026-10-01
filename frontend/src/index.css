@@ -23,8 +23,12 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 240 10% 3.9%;
-    --brand: 24.6 95% 53.1%;
+    /* Bistro palette: Gusteau's burgundy, brass gold and a warm cream. */
+    --brand: 354 62% 36%;
     --brand-foreground: 0 0% 100%;
+    --gold: 38 60% 40%;
+    --cream: 38 45% 96%;
+    --cream-foreground: 354 40% 22%;
     --radius: 0.75rem;
   }
 
@@ -48,10 +52,15 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
-    --brand: 20.5 90.2% 48.2%;
+    --brand: 355 68% 62%;
+    --brand-foreground: 240 10% 3.9%;
+    --gold: 38 70% 58%;
+    --cream: 20 14% 9%;
+    --cream-foreground: 36 45% 88%;
   }
 
   * { @apply border-border; }
   html { -webkit-text-size-adjust: 100%; }
   body { @apply bg-background text-foreground antialiased; font-feature-settings: "cv11", "ss01"; }
+  .font-serif { font-optical-sizing: auto; font-feature-settings: normal; }
 }

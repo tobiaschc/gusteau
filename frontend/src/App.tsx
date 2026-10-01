@@ -1,7 +1,8 @@
-import { Navigate, Route, Routes } from "react-router-dom"
+import { Route, Routes } from "react-router-dom"
 import { Layout } from "@/components/Layout"
 import { AppProvider } from "@/lib/context"
 import { EditorPage } from "@/pages/EditorPage"
+import { NotFoundPage } from "@/pages/NotFoundPage"
 import { PlanPage } from "@/pages/PlanPage"
 import { RecipePage } from "@/pages/RecipePage"
 import { RecipesPage } from "@/pages/RecipesPage"
@@ -18,7 +19,7 @@ export default function App() {
           <Route path="recipes/:slug" element={<RecipePage />} />
           <Route path="recipes/:slug/edit" element={<EditorPage />} />
           <Route path="list" element={<ShoppingPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </AppProvider>

@@ -5,7 +5,7 @@ import { RecipePicker } from "@/components/RecipePicker"
 import { SlotIcon } from "@/components/SlotIcon"
 import { Button } from "@/components/ui/Button"
 import { Card } from "@/components/ui/Card"
-import { ErrorBox, Loading, PageHeader } from "@/components/ui/States"
+import { EmptyState, ErrorBox, Loading, PageHeader } from "@/components/ui/States"
 import { WeekNav } from "@/components/WeekNav"
 import { api } from "@/lib/api"
 import { useApp } from "@/lib/context"
@@ -73,6 +73,12 @@ export function PlanPage() {
         <Loading />
       ) : (
         data && (
+          <>
+          {filled === 0 && (
+            <EmptyState className="mb-6 py-6" title="La cocina está en silencio">
+              Gusteau diría que cualquiera puede cocinar. Pulsa «Generar semana» y deja que Remy proponga, o elige tú cada plato.
+            </EmptyState>
+          )}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {Object.entries(data.days).map(([day, slots], i) => {
               const date = new Date(monday)
@@ -84,7 +90,7 @@ export function PlanPage() {
               return (
                 <Card key={day} className={cn("p-4", isToday && "ring-2 ring-brand/60")}>
                   <div className="mb-3 flex items-baseline justify-between">
-                    <h2 className="font-semibold">{DAY_LABELS[day] ?? day}</h2>
+                    <h2 className="font-serif text-[17px] font-semibold">{DAY_LABELS[day] ?? day}</h2>
                     <span className="text-xs text-muted-foreground">
                       {isToday && <span className="mr-1.5 font-medium text-brand">Hoy</span>}
                       {date.toLocaleDateString("es-ES", { day: "numeric", month: "short", timeZone: "UTC" })}
@@ -121,6 +127,7 @@ export function PlanPage() {
               )
             })}
           </div>
+          </>
         )
       )}
 

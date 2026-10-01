@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock, Pencil, Trash2, Users } from "lucide-react"
+import { ArrowLeft, Clock, Pencil, SearchX, Sparkles, Trash2, Users } from "lucide-react"
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { SlotIcon, slotOf } from "@/components/SlotIcon"
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
 import { Card } from "@/components/ui/Card"
 import { Dialog, DialogContent } from "@/components/ui/Dialog"
-import { ErrorBox, Loading } from "@/components/ui/States"
+import { EmptyState, ErrorBox, Loading } from "@/components/ui/States"
 import { api, type Segment } from "@/lib/api"
 import { useApp } from "@/lib/context"
 import { useLoad } from "@/lib/hooks"
@@ -44,9 +44,35 @@ export function RecipePage() {
   const [checked, setChecked] = useState<Set<number>>(new Set())
 
   if (loading && !r) return <Loading />
+  if (error && /no encontrad|not found|404/i.test(error))
+    return (
+      <EmptyState
+        icon={SearchX}
+        title="Esta receta no está en la carta"
+        action={
+          <Link to="/recipes">
+            <Button variant="outline">
+              <ArrowLeft /> Volver a las recetas
+            </Button>
+          </Link>
+        }
+      >
+        Quizá alguien la retiró del menú. Hasta los mejores cocineros pierden alguna receta.
+      </EmptyState>
+    )
   if (error || !r) return <ErrorBox message={error ?? "No encontrada"} onRetry={reload} />
 
+  // Easter egg: the dish that won over the toughest critic in Paris.
+  const isRatatouille = /ratatouille|byaldi/i.test(`${slug} ${r.title}`)
+
   const scale = people / r.servings
+  // Same ingredient used in several steps (e.g. oil) -> one line with the total.
+  const ingredients = r.ingredients.reduce<typeof r.ingredients>((acc, ing) => {
+    const prev = acc.find((x) => x.name === ing.name && x.unit === ing.unit)
+    if (prev && prev.quantity !== null && ing.quantity !== null) prev.quantity += ing.quantity
+    else if (!prev) acc.push({ ...ing })
+    return acc
+  }, [])
   const remove = async () => {
     try {
       await api.deleteRecipe(slug)
@@ -77,7 +103,7 @@ export function RecipePage() {
       <div className="mb-8 flex items-start gap-4">
         <SlotIcon slot={slotOf(r.tags)} className="h-12 w-12 rounded-xl" />
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{r.title}</h1>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight sm:text-3xl">{r.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {r.time && (
               <span className="flex items-center gap-1">
@@ -96,16 +122,25 @@ export function RecipePage() {
         </div>
       </div>
 
+      {isRatatouille && (
+        <div className="mb-8 flex items-start gap-3 rounded-xl border border-gold/40 bg-cream px-4 py-3 text-cream-foreground">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+          <p className="font-serif text-sm italic leading-relaxed">
+            El plato que hizo sonreír al crítico más temido de París. Sírvelo despacio: sabe a infancia.
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <Card className="h-fit p-5">
-          <h2 className="mb-3 font-semibold">Ingredientes</h2>
+          <h2 className="mb-3 font-serif text-lg font-semibold">Ingredientes</h2>
           <ul className="space-y-1">
-            {r.ingredients.map((ing, i) => (
+            {ingredients.map((ing, i) => (
               <li key={i}>
                 <label className="flex cursor-pointer items-baseline gap-3 rounded-md px-1 py-1 hover:bg-accent/60">
                   <input
                     type="checkbox"
-                    className="translate-y-0.5 accent-orange-500"
+                    className="translate-y-0.5 accent-[hsl(var(--brand))]"
                     checked={checked.has(i)}
                     onChange={() => {
                       const next = new Set(checked)
@@ -126,11 +161,11 @@ export function RecipePage() {
           </ul>
         </Card>
         <div>
-          <h2 className="mb-3 font-semibold">Preparación</h2>
+          <h2 className="mb-3 font-serif text-lg font-semibold">Preparación</h2>
           <ol className="space-y-4">
             {r.steps.map((s, i) => (
               <li key={i} className="flex gap-4">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 font-serif text-sm font-semibold text-brand">
                   {i + 1}
                 </span>
                 <div className="pt-0.5">

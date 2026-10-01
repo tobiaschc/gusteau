@@ -1,6 +1,17 @@
-# Gusteau
+<p align="center">
+  <img src="docs/logo.svg" width="96" height="96" alt="Gusteau logo: a chef's toque">
+</p>
+
+<h1 align="center">Gusteau</h1>
+
+<p align="center">
+  <em>Healthy recipes, a weekly plan and the shopping list, all from one small kitchen.</em><br>
+  <sub>self-hosted · local-only · Cooklang recipes · UI in Spanish</sub>
+</p>
 
 > *"Anyone can cook."*
+
+The name nods to the chef whose motto says a great cook can come from anywhere. In that spirit, Gusteau stays small: plain-text recipes you can read and edit, a week that fills itself in, and a shopping list grouped by aisle. No accounts, no cloud, no ads. Just you and the stove.
 
 A minimalist bank of healthy recipes plus a weekly planner that tells you what to buy.
 
@@ -58,3 +69,11 @@ Haz a la plancha @pechuga de pollo{150%g} con @aceite de oliva virgen extra{10%m
 | POST   | `/api/plans/{week}/generate`          | fill empty slots (`keep: false` to redo all) |
 | GET    | `/api/plans/{week}/shopping[.md]`     | shopping list (`?people=N`)       |
 | GET/PUT | `/api/settings`                      | `people`                          |
+
+## Branding
+
+The logo (`docs/logo.svg`, also `frontend/public/favicon.svg`) is an original drawing: a chef's toque with a small tail peeking out. The UI uses a bistro palette (burgundy, brass and cream) on top of the zinc shadcn base, and Fraunces (bundled with `@fontsource-variable/fraunces`, so it works offline) for headings.
+
+---
+
+<sub>Gusteau is an unofficial, fan-named personal project. It is not affiliated with, endorsed by or connected to Disney or Pixar. No official artwork is used; the only references are short quotes and the name.</sub>

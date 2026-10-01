@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss"
 import tw from "tailwindcss/colors"
 import animate from "tailwindcss-animate"
 
-// Same token setup as Finanze (shadcn, zinc greys) with a warm accent for food.
+// Same token setup as Finanze (shadcn, zinc greys) with a Parisian-bistro accent (burgundy, gold, cream).
 export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
@@ -23,9 +23,11 @@ export default {
         popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
         brand: { DEFAULT: "hsl(var(--brand))", foreground: "hsl(var(--brand-foreground))" },
+        gold: "hsl(var(--gold))",
+        cream: { DEFAULT: "hsl(var(--cream))", foreground: "hsl(var(--cream-foreground))" },
       },
       borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
-      fontFamily: { serif: ["'Fraunces'", "Georgia", "serif"] },
+      fontFamily: { serif: ["'Fraunces Variable'", "Fraunces", "Georgia", "serif"] },
     },
   },
   plugins: [animate],

@@ -1,5 +1,6 @@
-import { BookOpen, CalendarDays, ChefHat, Minus, Moon, Plus, ShoppingBasket, Sun, Users } from "lucide-react"
+import { BookOpen, CalendarDays, Minus, Moon, Plus, ShoppingBasket, Sun, Users } from "lucide-react"
 import { NavLink, Outlet } from "react-router-dom"
+import { RotatingQuote, ToqueMark } from "@/components/Brand"
 import { useApp } from "@/lib/context"
 import { cn } from "@/lib/utils"
 
@@ -45,12 +46,10 @@ function ThemeButton() {
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <ChefHat className="h-[18px] w-[18px]" />
-      </div>
-      <span className="text-lg font-semibold tracking-tight">Gusteau</span>
-    </div>
+    <NavLink to="/" className="flex items-center gap-2" aria-label="Gusteau, inicio">
+      <ToqueMark className="h-8 w-8" />
+      <span className="font-serif text-xl font-semibold tracking-tight">Gusteau</span>
+    </NavLink>
   )
 }
 
@@ -73,7 +72,7 @@ export function Layout() {
                 cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-secondary text-foreground"
+                    ? "bg-secondary text-foreground [&>svg]:text-brand"
                     : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
                 )
               }
@@ -86,7 +85,9 @@ export function Layout() {
         <div className="space-y-2 border-t border-gray-200 p-4 dark:border-gray-800">
           <p className="text-xs font-medium text-muted-foreground">Personas</p>
           <PeopleStepper className="w-fit" />
-          <p className="pt-2 text-xs italic text-muted-foreground">“Cualquiera puede cocinar.”</p>
+          <div className="pt-3">
+            <RotatingQuote />
+          </div>
         </div>
       </aside>
 
@@ -115,7 +116,7 @@ export function Layout() {
               className={({ isActive }) =>
                 cn(
                   "flex flex-col items-center gap-0.5 rounded-xl px-5 py-1.5 text-[11px] font-medium transition-colors",
-                  isActive ? "bg-secondary text-foreground" : "text-muted-foreground",
+                  isActive ? "bg-secondary text-foreground [&>svg]:text-brand" : "text-muted-foreground",
                 )
               }
             >
