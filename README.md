@@ -36,7 +36,8 @@ Frontend dev with hot reload: `uv run gusteau` in one shell, `cd frontend && npm
 gusteau/
   cooklang.py   parser            planner.py   weekly plan generator
   shopping.py   list + units      mercadona.py  product search, packs, prices (unofficial)
-  store.py      data dir (atomic writes, recipe cache, seed sync)
+  store.py      data access: .cook files (atomic writes, recipe cache, seed sync) + database
+  db.py         SQLAlchemy models (plans, settings) and engine; migrations/ = Alembic
   api/          FastAPI routers (recipes, plans, shopping, settings) + schemas.py (the API contract)
 frontend/src/
   pages/  components/  lib/api.ts (client) + lib/api.gen.ts (generated types)
@@ -44,17 +45,20 @@ tests/          one file per module, shared fakes in conftest.py
 ```
 
 - Checks: `uv run ruff format --check . && uv run ruff check . && uv run pytest`, and `npm run lint && npm run build` in `frontend/`. CI (`.github/workflows/ci.yml`) runs them all and builds the Docker image.
+- Database: SQLite at `$GUSTEAU_DATA/gusteau.db`, migrated to the latest schema on every start. After changing a model in `gusteau/db.py`, add a migration with `GUSTEAU_DATA=./data uv run alembic revision --autogenerate -m "..."` (a test fails if models and migrations drift).
 - After changing anything in `gusteau/api/schemas.py`, run `npm run gen:api` in `frontend/`: it regenerates `openapi.json` and the TypeScript types. Commit both generated files; CI fails if they are stale.
 
 Environment variables:
 
 | Variable         | Default                | Purpose                                 |
 | ---------------- | ---------------------- | --------------------------------------- |
-| `GUSTEAU_DATA`   | `./data`               | recipes, plans and settings (on disk)   |
+| `GUSTEAU_DATA`   | `./data`               | recipes (.cook) and `gusteau.db`        |
 | `GUSTEAU_PORT`   | `8000`                 | HTTP port                               |
 | `GUSTEAU_STATIC` | `gusteau/static`       | built frontend served at `/`            |
 
-On every start the bundled `recipes/` and `aisles.yml` are synced into `GUSTEAU_DATA`: new recipes are added and untouched ones updated; recipes you edited or deleted are left alone, and new ingredients are appended to a customised `aisles.yml`.
+On every start the bundled `recipes/` and `aisles.yml` are synced into `GUSTEAU_DATA`: new recipes are added and untouched ones updated; recipes you edited or deleted are left alone, and new ingredients are appended to a customised `aisles.yml`. Plans and settings from versions before the database (`plans/*.json`, `settings.json`) are imported once and the files renamed to `*.imported`.
+
+Backup: copy the whole data dir (or the Docker volume). For a consistent copy of a running instance use `sqlite3 gusteau.db ".backup gusteau-backup.db"`.
 
 ## Recipe format
 

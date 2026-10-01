@@ -19,8 +19,9 @@ def current_week(today: dt.date | None = None) -> str:
 
 def plan_view(store: Store, plan: dict) -> Plan:
     titles = {r.slug: r.title for r in store.list_recipes()}
+    planned = plan.get("titles", {})  # title when planned: shown if the recipe was renamed or deleted
     used = {s for day in plan["days"].values() for s in day.values() if s}
-    return Plan(week=plan["week"], days=plan["days"], titles={s: titles.get(s) for s in used})
+    return Plan(week=plan["week"], days=plan["days"], titles={s: titles.get(s) or planned.get(s) for s in used})
 
 
 @router.get("/current", response_model=Plan)

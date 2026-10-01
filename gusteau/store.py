@@ -1,9 +1,8 @@
-"""File-based storage: recipes are .cook files, plans and settings are JSON.
+"""Storage: recipes are .cook files, plans and settings live in SQLite (gusteau/db.py).
 
 Layout under GUSTEAU_DATA (default ./data):
     recipes/<slug>.cook
-    plans/<YYYY-Www>.json
-    settings.json
+    gusteau.db      plans, settings (SQLite; schema migrated on startup)
     aisles.yml      ingredient -> supermarket aisle (optional)
     products.yml    your ingredient -> Mercadona product picks (override the bundled ones)
     .cache/         Mercadona responses
@@ -22,7 +21,11 @@ import unicodedata
 from pathlib import Path
 
 import yaml
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.orm import Session, sessionmaker
 
+from . import db
 from .cooklang import Recipe, parse
 
 DAYS = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
@@ -87,12 +90,14 @@ class Store:
     def __init__(self, root: Path | str | None = None):
         self.root = Path(root or os.environ.get("GUSTEAU_DATA", "data"))
         self.recipes_dir = self.root / "recipes"
-        self.plans_dir = self.root / "plans"
-        self.plans_dir.mkdir(parents=True, exist_ok=True)
-        self.recipes_dir.mkdir(exist_ok=True)
+        self.recipes_dir.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
         self._recipes: dict[str, tuple[tuple[int, int], Recipe]] = {}
+        self.engine = db.make_engine(self.root / "gusteau.db")
+        db.migrate(self.engine)
+        self.session: sessionmaker[Session] = sessionmaker(self.engine, expire_on_commit=False)
         self.sync_seed()
+        self._import_json()
 
     def sync_seed(self) -> None:
         """Bring bundled recipes and aisles into the data dir without clobbering user edits.
@@ -193,33 +198,82 @@ class Store:
 
     # ---- plans ----
 
-    def _plan_path(self, week: str) -> Path:
-        if not WEEK.match(week):
-            raise KeyError(week)
-        return self.plans_dir / f"{week}.json"
+    def _empty_days(self) -> dict[str, dict[str, str | None]]:
+        return {d: dict.fromkeys(self.settings()["slots"]) for d in DAYS}
 
     def get_plan(self, week: str) -> dict:
-        path = self._plan_path(week)
-        if path.exists():
-            return json.loads(path.read_text())
-        return {"week": week, "days": {d: {s: None for s in self.settings()["slots"]} for d in DAYS}}
+        """{"week", "days": {day: {slot: slug | None}}, "titles": {slug: title when planned}}"""
+        if not WEEK.match(week):
+            raise KeyError(week)
+        days = self._empty_days()
+        titles: dict[str, str] = {}
+        with self.session() as s:
+            for m in s.scalars(select(db.Meal).where(db.Meal.week == week)):
+                days.setdefault(m.day, {})[m.slot] = m.recipe_slug
+                titles[m.recipe_slug] = m.recipe_title
+        return {"week": week, "days": days, "titles": titles}
 
     def save_plan(self, plan: dict) -> dict:
-        atomic_write(self._plan_path(plan["week"]), json.dumps(plan, ensure_ascii=False, indent=2))
-        return plan
+        week = plan["week"]
+        if not WEEK.match(week):
+            raise KeyError(week)
+        known = plan.get("titles", {}) | {r.slug: r.title for r in self.list_recipes()}  # current title wins
+        with self.session.begin() as s:
+            now = db.utcnow()  # upsert: atomic even when two requests save the same new week
+            s.execute(
+                insert(db.Plan)
+                .values(week=week, updated_at=now)
+                .on_conflict_do_update(index_elements=[db.Plan.week], set_={"updated_at": now})
+            )
+            s.execute(delete(db.Meal).where(db.Meal.week == week))
+            for day, slots in plan["days"].items():
+                for slot, slug in slots.items():
+                    if slug:
+                        s.add(
+                            db.Meal(week=week, day=day, slot=slot, recipe_slug=slug, recipe_title=known.get(slug, slug))
+                        )
+        return self.get_plan(week)
 
     # ---- settings & aisles ----
 
     def settings(self) -> dict:
-        path = self.root / "settings.json"
-        stored = json.loads(path.read_text()) if path.exists() else {}
+        with self.session() as s:
+            stored = {row.key: row.value for row in s.scalars(select(db.Setting))}
         return {**DEFAULT_SETTINGS, **stored}
 
     def save_settings(self, values: dict) -> dict:
-        with self._lock:
-            merged = {**self.settings(), **values}
-            atomic_write(self.root / "settings.json", json.dumps(merged, ensure_ascii=False, indent=2))
-        return merged
+        with self.session.begin() as s:
+            for key, value in values.items():
+                stmt = insert(db.Setting).values(key=key, value=value)
+                s.execute(
+                    stmt.on_conflict_do_update(index_elements=[db.Setting.key], set_={"value": stmt.excluded.value})
+                )
+        return self.settings()
+
+    # ---- one-off import from the JSON files used before the database ----
+
+    def _import_json(self) -> None:
+        """Move plans/*.json and settings.json into the database, then rename them to *.imported."""
+        settings = self.root / "settings.json"
+        if settings.exists():
+            with self.session.begin() as s:
+                for key, value in json.loads(settings.read_text()).items():
+                    if s.get(db.Setting, key) is None:
+                        s.add(db.Setting(key=key, value=value))
+            settings.rename(settings.with_suffix(".json.imported"))
+        plans = self.root / "plans"
+        if plans.is_dir():
+            for path in sorted(plans.glob("*.json")):
+                plan = json.loads(path.read_text())
+                with self.session() as s:
+                    exists = s.get(db.Plan, plan.get("week", "")) is not None
+                if WEEK.match(plan.get("week", "")) and not exists:
+                    self.save_plan({"week": plan["week"], "days": plan.get("days", {})})
+            target = self.root / "plans.imported"
+            n = 2
+            while target.exists():
+                target, n = self.root / f"plans.imported-{n}", n + 1
+            plans.rename(target)
 
     def aisles(self) -> dict[str, str]:
         path = self.root / "aisles.yml"
