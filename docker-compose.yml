@@ -1,0 +1,15 @@
+services:
+  gusteau:
+    build: .
+    image: gusteau:latest
+    container_name: gusteau
+    restart: unless-stopped
+    ports:
+      - "${GUSTEAU_PUBLISHED_PORT:-8000}:8000"
+    volumes:
+      - gusteau-data:/data
+    environment:
+      TZ: Europe/Madrid
+
+volumes:
+  gusteau-data:
