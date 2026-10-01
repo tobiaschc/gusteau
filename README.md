@@ -38,7 +38,7 @@ Environment variables:
 | `GUSTEAU_PORT`   | `8000`                 | HTTP port                               |
 | `GUSTEAU_STATIC` | `gusteau/static`       | built frontend served at `/`            |
 
-On first start the bundled `recipes/` and `aisles.yml` are copied into `GUSTEAU_DATA`.
+On every start the bundled `recipes/` and `aisles.yml` are synced into `GUSTEAU_DATA`: new recipes are added and untouched ones updated; recipes you edited or deleted are left alone, and new ingredients are appended to a customised `aisles.yml`.
 
 ## Recipe format
 
@@ -57,6 +57,7 @@ Haz a la plancha @pechuga de pollo{150%g} con @aceite de oliva virgen extra{10%m
 - `tags` containing `desayuno`, `comida` or `cena` decide which slots a recipe can fill (no slot tag = any slot).
 - Units `g/kg`, `ml/l` and plain counts are merged; anything else is summed per unit. `@sal` without quantity shows as "al gusto".
 - Supported Cooklang subset: front matter, ingredients, cookware (`#`), timers (`~`), comments (`--`, `[- -]`).
+- Planner tags: `habitual` (your usual dishes, proposed more often: ~5 breakfasts and 4–6 lunches/dinners a week, each main at most twice), `finde` (long recipes, Saturday/Sunday only), `legumbre` / `pescado` / `carne` (weekly balance: 3–4 / 2–3 / 2–4).
 
 ## API
 

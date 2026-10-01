@@ -87,6 +87,10 @@ export function EditorPage() {
             <code>tags</code> con <code>desayuno</code>, <code>comida</code> o <code>cena</code> decide en qué huecos del plan
             puede salir.
           </p>
+          <p>
+            Añade <code>habitual</code> a tus platos de cabecera para que el plan los proponga más a menudo, y{" "}
+            <code>finde</code> a los largos para que solo salgan sábado o domingo.
+          </p>
         </div>
       </Card>
     </div>

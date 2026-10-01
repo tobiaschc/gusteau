@@ -108,7 +108,7 @@ def test_generate_respects_slot_tags_and_avoids_consecutive_repeats():
     assert days[0]["comida"] == "c1"  # kept
     assert all(d["desayuno"] in {"d1", "d2"} for d in days)
     assert all(d["cena"] in {"c3", "n1"} for d in days)
-    for slot in ("desayuno", "comida", "cena"):
+    for slot in ("comida", "cena"):  # breakfasts may repeat on consecutive days
         seq = [d[slot] for d in days]
         assert all(x != y for x, y in pairwise(seq)), seq
     for d in days:
@@ -135,12 +135,62 @@ def test_generate_balances_proteins_and_keeps_finde_for_weekend(tmp_path):
                 assert not weekend_only & set(slots.values()), (seed, day)
 
 
+def test_generate_favours_habitual_recipes(tmp_path):
+    from gusteau.planner import HABITUAL_MAX_EACH
+
+    store = Store(tmp_path)
+    recipes = store.list_recipes()
+    usual = {r.slug for r in recipes if "habitual" in r.tags}
+    assert {"tortilla-francesa-pan", "solomillo-pure-patata", "burger-pollo-boniato"} <= usual
+    for seed in range(5):
+        days = generate(store.get_plan(WEEK), recipes, keep=False, seed=seed)["days"].values()
+        assert 5 <= sum(d["desayuno"] in usual for d in days) <= 6, seed
+        mains = [d[s] for d in days for s in ("comida", "cena")]
+        assert 4 <= sum(m in usual for m in mains) <= 6, seed
+        assert all(mains.count(m) <= HABITUAL_MAX_EACH for m in usual), seed
+
+
 # ---------- store & API ----------
 
 
 @pytest.fixture
 def client(tmp_path):
     return TestClient(create_app(Store(tmp_path), static_dir=tmp_path / "nostatic"))
+
+
+def test_seed_sync_adds_new_recipes_and_respects_user_changes(tmp_path, monkeypatch):
+    import gusteau.store as st
+
+    bundle = tmp_path / "bundle"
+    (bundle / "recipes").mkdir(parents=True)
+    (bundle / "aisles.yml").write_text("Frutería: [tomate]\n")
+    monkeypatch.setattr(st, "SEED", bundle / "recipes")
+    monkeypatch.setattr(st, "SEED_AISLES", bundle / "aisles.yml")
+
+    def bundle_recipe(slug, qty):
+        (bundle / "recipes" / f"{slug}.cook").write_text(f"---\ntitle: {slug}\ntags: [cena]\n---\n@tomate{{{qty}}}\n")
+
+    bundle_recipe("a", 1)
+    bundle_recipe("b", 1)
+    bundle_recipe("c", 1)
+    data = tmp_path / "data"
+    store = Store(data)
+    assert {r.slug for r in store.list_recipes()} == {"a", "b", "c"}
+
+    # user edits b, deletes c; app update changes a, b, c and adds d + a new aisle item
+    store.save_recipe("---\ntitle: mine\ntags: [cena]\n---\n@tomate{9}\n", "b")
+    store.delete_recipe("c")
+    (data / "aisles.yml").write_text("Mi pasillo: [tomate]\n")
+    for slug in "abcd":
+        bundle_recipe(slug, 2)
+    (bundle / "aisles.yml").write_text("Frutería: [tomate, pepino]\n")
+
+    store = Store(data)
+    recipes = {r.slug: r for r in store.list_recipes()}
+    assert set(recipes) == {"a", "b", "d"}  # c stays deleted
+    assert recipes["a"].ingredients[0].quantity == 2  # untouched -> updated
+    assert recipes["b"].title == "mine"  # edited -> kept
+    assert store.aisles() == {"tomate": "Mi pasillo", "pepino": "Frutería"}  # user aisle kept, new item merged
 
 
 def test_slugify():
