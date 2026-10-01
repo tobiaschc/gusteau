@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 import time
 import unicodedata
 import urllib.parse
@@ -20,6 +21,8 @@ import urllib.request
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+from .store import atomic_write
 
 ALGOLIA_APP = "7UZJKL1DJ0"
 ALGOLIA_KEY = "9d8f2e39e90df472b4f2e559a116fe17"  # public search-only key from tienda.mercadona.es
@@ -97,6 +100,7 @@ class Mercadona:
         self.warehouse = warehouse
         self.fetch = fetch or _http_post
         self._cache: dict | None = None
+        self._lock = threading.Lock()  # one cache dict shared by the API's worker threads
 
     # ---- cache ----
 
@@ -110,17 +114,24 @@ class Mercadona:
         return self._cache
 
     def _save(self) -> None:
-        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
-        self.cache_path.write_text(json.dumps(self._load(), ensure_ascii=False))
+        with self._lock:
+            self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+            now = time.time()
+            cache = self._load()
+            for key in [k for k, e in cache.items() if now - e["t"] > AUTO_TTL]:  # keep the file small
+                del cache[key]
+            atomic_write(self.cache_path, json.dumps(cache, ensure_ascii=False))
 
     def _get(self, key: str, ttl: int):
-        entry = self._load().get(f"{self.warehouse}:{key}")
+        with self._lock:
+            entry = self._load().get(f"{self.warehouse}:{key}")
         if entry and time.time() - entry["t"] < ttl:
             return entry["v"]
         return None
 
     def _put(self, key: str, value) -> None:
-        self._load()[f"{self.warehouse}:{key}"] = {"t": time.time(), "v": value}
+        with self._lock:
+            self._load()[f"{self.warehouse}:{key}"] = {"t": time.time(), "v": value}
 
     # ---- API ----
 

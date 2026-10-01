@@ -16,7 +16,8 @@ import hashlib
 import json
 import os
 import re
-import shutil
+import tempfile
+import threading
 import unicodedata
 from pathlib import Path
 
@@ -39,6 +40,24 @@ def slugify(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text).strip("-") or "receta"
 
 
+def atomic_write(path: Path, text: str) -> None:
+    """Write `text` to `path` so readers see the old or the new file, never half of one.
+
+    Temp file in the same directory + fsync + os.replace (atomic on POSIX). Protects
+    against a crash or container stop mid-write; concurrent writers still need a lock.
+    """
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
 def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -52,16 +71,27 @@ def _merge_aisles(local: Path, bundled: Path) -> None:
         if missing:
             mine.setdefault(aisle, [])
             mine[aisle] = list(mine[aisle] or []) + missing
-    local.write_text(yaml.safe_dump(mine, allow_unicode=True, sort_keys=False, width=120), encoding="utf-8")
+    atomic_write(local, yaml.safe_dump(mine, allow_unicode=True, sort_keys=False, width=120))
 
 
 class Store:
+    """All reads and writes of the data dir.
+
+    Thread-safe within one process (FastAPI runs sync endpoints in a thread pool):
+    read-modify-write operations hold `_lock`, and every write is atomic. Parsed
+    recipes are cached and re-parsed only when their file changes (mtime/size), so
+    listing the bank costs one directory scan. Returned Recipe objects are shared:
+    treat them as read-only.
+    """
+
     def __init__(self, root: Path | str | None = None):
         self.root = Path(root or os.environ.get("GUSTEAU_DATA", "data"))
         self.recipes_dir = self.root / "recipes"
         self.plans_dir = self.root / "plans"
         self.plans_dir.mkdir(parents=True, exist_ok=True)
         self.recipes_dir.mkdir(exist_ok=True)
+        self._lock = threading.RLock()
+        self._recipes: dict[str, tuple[tuple[int, int], Recipe]] = {}
         self.sync_seed()
 
     def sync_seed(self) -> None:
@@ -82,25 +112,25 @@ class Store:
             seeded = recipes.get(src.stem)
             if seeded is None:
                 if not dst.exists() or first_run:
-                    shutil.copy(src, dst)
+                    atomic_write(dst, src.read_text(encoding="utf-8"))
                     recipes[src.stem] = bundled
                 elif _digest(dst.read_bytes()) == bundled:
                     recipes[src.stem] = bundled  # already identical (install from before tracking)
                 # else: same slug created by the user -> theirs
             elif seeded != bundled and dst.exists() and _digest(dst.read_bytes()) == seeded:
-                shutil.copy(src, dst)
+                atomic_write(dst, src.read_text(encoding="utf-8"))
                 recipes[src.stem] = bundled
 
         aisles = self.root / "aisles.yml"
         if SEED_AISLES.exists():
             bundled = _digest(SEED_AISLES.read_bytes())
             if not aisles.exists() or _digest(aisles.read_bytes()) in (state.get("aisles"), bundled):
-                shutil.copy(SEED_AISLES, aisles)
+                atomic_write(aisles, SEED_AISLES.read_text(encoding="utf-8"))
                 state["aisles"] = bundled
             elif state.get("aisles_bundle") != bundled:
                 _merge_aisles(aisles, SEED_AISLES)
             state["aisles_bundle"] = bundled
-        state_path.write_text(json.dumps(state, indent=2, sort_keys=True))
+        atomic_write(state_path, json.dumps(state, indent=2, sort_keys=True))
 
     # ---- recipes ----
 
@@ -109,14 +139,31 @@ class Store:
             raise KeyError(slug)
         return self.recipes_dir / f"{slug}.cook"
 
+    def _cached(self, path: Path) -> Recipe:
+        st = path.stat()
+        key = (st.st_mtime_ns, st.st_size)
+        hit = self._recipes.get(path.stem)
+        if hit and hit[0] == key:
+            return hit[1]
+        recipe = parse(path.read_text(encoding="utf-8"), path.stem)
+        self._recipes[path.stem] = (key, recipe)
+        return recipe
+
     def list_recipes(self) -> list[Recipe]:
-        return sorted((self.get_recipe(p.stem) for p in self.recipes_dir.glob("*.cook")), key=lambda r: r.title.lower())
+        paths = [p for p in self.recipes_dir.glob("*.cook") if SLUG.match(p.stem)]
+        with self._lock:
+            recipes = [self._cached(p) for p in paths]
+            for gone in self._recipes.keys() - {p.stem for p in paths}:
+                del self._recipes[gone]
+        return sorted(recipes, key=lambda r: r.title.lower())
 
     def get_recipe(self, slug: str) -> Recipe:
         path = self._recipe_path(slug)
-        if not path.exists():
-            raise KeyError(slug)
-        return parse(path.read_text(encoding="utf-8"), slug)
+        try:
+            with self._lock:
+                return self._cached(path)
+        except FileNotFoundError:
+            raise KeyError(slug) from None
 
     def get_source(self, slug: str) -> str:
         path = self._recipe_path(slug)
@@ -126,13 +173,13 @@ class Store:
 
     def save_recipe(self, source: str, slug: str | None = None) -> Recipe:
         recipe = parse(source, slug or "")  # validate before touching disk
-        if slug is None:
-            base = slug = slugify(recipe.title)
-            n = 2
-            while self._recipe_path(slug).exists():
-                slug, n = f"{base}-{n}", n + 1
-        path = self._recipe_path(slug)
-        path.write_text(source if source.endswith("\n") else source + "\n", encoding="utf-8")
+        with self._lock:  # slug allocation + write must not interleave with another create
+            if slug is None:
+                base = slug = slugify(recipe.title)
+                n = 2
+                while self._recipe_path(slug).exists():
+                    slug, n = f"{base}-{n}", n + 1
+            atomic_write(self._recipe_path(slug), source if source.endswith("\n") else source + "\n")
         recipe.slug = slug
         return recipe
 
@@ -140,7 +187,9 @@ class Store:
         path = self._recipe_path(slug)
         if not path.exists():
             raise KeyError(slug)
-        path.unlink()
+        with self._lock:
+            path.unlink()
+            self._recipes.pop(slug, None)
 
     # ---- plans ----
 
@@ -156,7 +205,7 @@ class Store:
         return {"week": week, "days": {d: {s: None for s in self.settings()["slots"]} for d in DAYS}}
 
     def save_plan(self, plan: dict) -> dict:
-        self._plan_path(plan["week"]).write_text(json.dumps(plan, ensure_ascii=False, indent=2))
+        atomic_write(self._plan_path(plan["week"]), json.dumps(plan, ensure_ascii=False, indent=2))
         return plan
 
     # ---- settings & aisles ----
@@ -167,8 +216,9 @@ class Store:
         return {**DEFAULT_SETTINGS, **stored}
 
     def save_settings(self, values: dict) -> dict:
-        merged = {**self.settings(), **values}
-        (self.root / "settings.json").write_text(json.dumps(merged, ensure_ascii=False, indent=2))
+        with self._lock:
+            merged = {**self.settings(), **values}
+            atomic_write(self.root / "settings.json", json.dumps(merged, ensure_ascii=False, indent=2))
         return merged
 
     def aisles(self) -> dict[str, str]:
@@ -192,6 +242,7 @@ class Store:
 
     def set_product(self, ingredient: str, product_id: str | None) -> None:
         path = self.root / "products.yml"
-        data = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}) if path.exists() else {}
-        data[ingredient.lower()] = product_id
-        path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=True), encoding="utf-8")
+        with self._lock:
+            data = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}) if path.exists() else {}
+            data[ingredient.lower()] = product_id
+            atomic_write(path, yaml.safe_dump(data, allow_unicode=True, sort_keys=True))

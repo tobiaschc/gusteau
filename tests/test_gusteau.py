@@ -286,6 +286,51 @@ def test_seed_sync_adds_new_recipes_and_respects_user_changes(tmp_path, monkeypa
     assert store.aisles() == {"tomate": "Mi pasillo", "pepino": "Frutería"}  # user aisle kept, new item merged
 
 
+def test_atomic_write_leaves_old_file_on_failure(tmp_path, monkeypatch):
+    from gusteau import store as st
+
+    target = tmp_path / "plan.json"
+    target.write_text("old")
+
+    def boom(*_):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(st.os, "replace", boom)
+    with pytest.raises(OSError):
+        st.atomic_write(target, "new")
+    assert target.read_text() == "old"
+    assert [p.name for p in tmp_path.iterdir()] == ["plan.json"]  # no temp file left behind
+
+
+def test_recipe_cache_reparses_only_changed_files(tmp_path, monkeypatch):
+    from gusteau import store as st
+
+    store = Store(tmp_path)
+    n = len(store.list_recipes())  # warm the cache
+    calls = []
+    real_parse = st.parse
+    monkeypatch.setattr(st, "parse", lambda text, slug: calls.append(slug) or real_parse(text, slug))
+    store.list_recipes()
+    assert calls == []  # nothing changed -> nothing re-parsed
+    store.save_recipe("---\ntitle: Nueva\ntags: [cena]\n---\n@tomate{1}\n", "nueva")
+    store.save_recipe("---\ntitle: Cambiada\ntags: [cena]\n---\n@tomate{2}\n", "lentejas-con-verduras")
+    calls.clear()
+    recipes = {r.slug: r for r in store.list_recipes()}
+    assert sorted(calls) == ["lentejas-con-verduras", "nueva"] and len(recipes) == n + 1
+    assert recipes["lentejas-con-verduras"].title == "Cambiada"
+    store.delete_recipe("nueva")
+    assert "nueva" not in {r.slug for r in store.list_recipes()}
+
+
+def test_concurrent_settings_writes_do_not_corrupt(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    store = Store(tmp_path)
+    with ThreadPoolExecutor(8) as pool:
+        list(pool.map(lambda n: store.save_settings({"people": n % 5 + 1}), range(200)))
+    assert 1 <= store.settings()["people"] <= 5  # valid JSON, a value one of the writers set
+
+
 def test_slugify():
     assert slugify("Salmón con patata & ensalada!") == "salmon-con-patata-ensalada"
 
