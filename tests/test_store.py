@@ -37,6 +37,14 @@ def test_seed_sync_adds_new_recipes_and_respects_user_changes(tmp_path, monkeypa
     assert recipes["b"].title == "mine"  # edited -> kept
     assert store.aisles() == {"tomate": "Mi pasillo", "pepino": "Frutería"}  # user aisle kept, new item merged
 
+    # next update retires a (untouched) and b (edited by the user)
+    (bundle / "recipes" / "a.cook").unlink()
+    (bundle / "recipes" / "b.cook").unlink()
+    store = Store(data)
+    assert {r.slug for r in store.list_recipes()} == {"b", "d"}  # a removed, b kept as the user's own
+    bundle_recipe("b", 3)  # ...and a later bundled "b" doesn't overwrite it
+    assert Store(data).get_recipe("b").title == "mine"
+
 
 def test_atomic_write_leaves_old_file_on_failure(tmp_path, monkeypatch):
     from gusteau import store as st

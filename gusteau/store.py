@@ -105,6 +105,7 @@ class Store:
         - new bundled recipe -> copied in
         - bundled recipe changed, local copy untouched since last sync -> updated
         - local copy edited, or deleted by the user -> left alone
+        - recipe removed from the bundle -> removed here too, unless the user edited it
         - aisles.yml: replaced if untouched, otherwise new ingredients are appended to their aisle
         """
         state_path = self.root / ".seeded.json"
@@ -125,6 +126,12 @@ class Store:
             elif seeded != bundled and dst.exists() and _digest(dst.read_bytes()) == seeded:
                 atomic_write(dst, src.read_text(encoding="utf-8"))
                 recipes[src.stem] = bundled
+        bundle = {p.stem for p in SEED.glob("*.cook")} if SEED.is_dir() else set()
+        for slug in [s for s in recipes if bundle and s not in bundle]:  # retired from the bundle
+            dst = self.recipes_dir / f"{slug}.cook"
+            if dst.exists() and _digest(dst.read_bytes()) == recipes[slug]:
+                dst.unlink()  # untouched copy -> goes too; an edited one is now the user's own
+            del recipes[slug]
 
         aisles = self.root / "aisles.yml"
         if SEED_AISLES.exists():
