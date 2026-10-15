@@ -20,7 +20,23 @@ A minimalist bank of healthy recipes plus a weekly planner that tells you what t
 - The shopping list adds up every ingredient in the plan, scaled to the number of people (default 2), grouped by aisle in the order of `aisles.yml`.
 - History and stats: meals of past days count as eaten unless marked "no se hizo" or "comimos otra cosa"; "Compra hecha" saves the list with that day's prices (plus the receipt total if you enter it). The Datos page shows the most repeated dishes, recipes you never cook, and spending per week and month.
 
-## Run
+## Usage
+
+### Docker
+
+```bash
+docker compose up -d       # http://localhost:8000
+```
+
+Builds the image (frontend + backend) and starts it with a persistent `gusteau-data` volume. Override the published port with `GUSTEAU_PUBLISHED_PORT` (default `8000`).
+
+### Backup
+
+Copy the whole data dir (or the Docker volume). For a consistent copy of a running instance use `sqlite3 gusteau.db ".backup gusteau-backup.db"`.
+
+## Development
+
+### Setup
 
 ```bash
 (cd frontend && npm ci && npm run build)   # builds the UI into gusteau/static
@@ -31,7 +47,7 @@ uv run pytest
 
 Frontend dev with hot reload: `uv run gusteau` in one shell, `cd frontend && npm run dev` in another (Vite proxies `/api` to :8000).
 
-## Develop
+### Layout
 
 ```
 gusteau/
@@ -53,14 +69,12 @@ tests/          one file per module, shared fakes in conftest.py
 Environment variables:
 
 | Variable         | Default                | Purpose                                 |
-| ---------------- | ---------------------- | --------------------------------------- |
+| ---------------- | ---------------------- | ---------------------------------------- |
 | `GUSTEAU_DATA`   | `./data`               | recipes (.cook) and `gusteau.db`        |
 | `GUSTEAU_PORT`   | `8000`                 | HTTP port                               |
 | `GUSTEAU_STATIC` | `gusteau/static`       | built frontend served at `/`            |
 
 On every start the bundled `recipes/` and `aisles.yml` are synced into `GUSTEAU_DATA`: new recipes are added and untouched ones updated; recipes you edited or deleted are left alone, and new ingredients are appended to a customised `aisles.yml`. Plans and settings from versions before the database (`plans/*.json`, `settings.json`) are imported once and the files renamed to `*.imported`.
-
-Backup: copy the whole data dir (or the Docker volume). For a consistent copy of a running instance use `sqlite3 gusteau.db ".backup gusteau-backup.db"`.
 
 ## Recipe format
 
