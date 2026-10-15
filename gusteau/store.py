@@ -30,7 +30,7 @@ from .cooklang import Recipe, parse
 
 DAYS = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
 SLOTS = ["desayuno", "comida", "cena"]
-DEFAULT_SETTINGS = {"people": 2, "slots": SLOTS, "prices": True, "warehouse": "mad1"}
+DEFAULT_SETTINGS = {"people": 2, "slots": SLOTS, "prices": True, "warehouse": "mad1", "favorite_ingredients": []}
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 WEEK = re.compile(r"^\d{4}-W(0[1-9]|[1-4]\d|5[0-3])$")
 SEED = Path(__file__).resolve().parent.parent / "recipes"

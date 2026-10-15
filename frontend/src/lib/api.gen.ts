@@ -695,6 +695,11 @@ export interface components {
         };
         /** Settings */
         Settings: {
+            /**
+             * Favorite Ingredients
+             * @description ingredient names the planner favours when picking mains
+             */
+            favorite_ingredients: string[];
             /** People */
             people: number;
             /** Prices */
@@ -706,6 +711,8 @@ export interface components {
         };
         /** SettingsIn */
         SettingsIn: {
+            /** Favorite Ingredients */
+            favorite_ingredients?: string[] | null;
             /** People */
             people?: number | null;
             /** Prices */

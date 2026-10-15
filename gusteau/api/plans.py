@@ -49,7 +49,14 @@ def put_plan(week: Week, body: PlanIn, store: StoreDep):
 
 @router.post("/{week}/generate", response_model=Plan)
 def generate_plan(week: Week, body: GenerateIn, store: StoreDep):
-    plan = planner.generate(store.get_plan(week), store.list_recipes(), keep=body.keep, seed=body.seed)
+    favorite_ingredients = store.settings().get("favorite_ingredients", [])
+    plan = planner.generate(
+        store.get_plan(week),
+        store.list_recipes(),
+        keep=body.keep,
+        seed=body.seed,
+        favorite_ingredients=favorite_ingredients,
+    )
     return plan_view(store, store.save_plan(plan))
 
 

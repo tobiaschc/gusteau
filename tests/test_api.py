@@ -53,3 +53,6 @@ def test_settings(client):
     assert client.get("/api/settings").json()["people"] == 2
     assert client.put("/api/settings", json={"people": 3}).json()["people"] == 3
     assert client.put("/api/settings", json={"people": 0}).status_code == 422
+    assert client.get("/api/settings").json()["favorite_ingredients"] == []
+    body = client.put("/api/settings", json={"favorite_ingredients": ["salmón", "aguacate"]}).json()
+    assert body["favorite_ingredients"] == ["salmón", "aguacate"]

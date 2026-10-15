@@ -19,6 +19,10 @@ HABITUAL = "habitual"
 HABITUAL_TARGET = {"desayuno": (5, 6), "main": (4, 6)}
 HABITUAL_PICK = {"desayuno": 0.75, "main": 0.4}
 HABITUAL_MAX_EACH = 2  # a usual lunch/dinner at most twice a week
+# Recipes containing a favorite ingredient (gusteau/api/schemas.py Settings.favorite_ingredients)
+# get a flat bonus per lunch/dinner slot they fill, via the synthetic FAVORITE tag below.
+FAVORITE = "favorito"
+FAVORITE_BONUS = 2
 
 
 def _group(slot: str) -> str:
@@ -60,6 +64,11 @@ def penalty(days: dict[str, dict[str, str | None]], tags: dict[str, list[str]] |
             continue
         n = sum(habitual(day[s]) for day in days.values() for s in group_slots)
         score += 4 * (max(0, lo - n) + max(0, n - hi))
+    for day in days.values():
+        for slot in MAIN_SLOTS:
+            recipe = day.get(slot)
+            if recipe and FAVORITE in tags.get(recipe, []):
+                score -= FAVORITE_BONUS
     return score
 
 
@@ -95,21 +104,32 @@ def _fill_once(start, slots, pools, known, rng, weekend_only=frozenset(), habitu
     return out
 
 
-def generate(plan: dict, recipes: list[Recipe], keep: bool = True, seed: int | None = None) -> dict:
+def generate(
+    plan: dict,
+    recipes: list[Recipe],
+    keep: bool = True,
+    seed: int | None = None,
+    favorite_ingredients: list[str] | None = None,
+) -> dict:
     """Fill the empty slots of `plan`.
 
     A recipe can go in a slot if it has that slot as a tag (recipes without any slot
     tag fit anywhere). Avoids the same recipe twice in one day or the same lunch/dinner
     on consecutive days, spreads repeats, balances legumes / fish / meat across the
-    week's lunches and dinners (BALANCE), favours `habitual` recipes (HABITUAL_TARGET)
-    and keeps `finde` recipes for the weekend. `keep=False` refills every slot.
+    week's lunches and dinners (BALANCE), favours `habitual` recipes (HABITUAL_TARGET),
+    rewards lunches/dinners that use a favorite ingredient (FAVORITE_BONUS) and keeps
+    `finde` recipes for the weekend. `keep=False` refills every slot.
     Greedy fill with random restarts; the plan with the lowest `penalty` wins and is
     then polished by a single-slot hill-climb.
     """
     rng = random.Random(seed)
     slots = list(next(iter(plan["days"].values()), {}))
     known = {r.slug for r in recipes}
-    tags = {r.slug: r.tags for r in recipes}
+    favorites = {f.strip().lower() for f in (favorite_ingredients or []) if f.strip()}
+    tags = {
+        r.slug: [*r.tags, FAVORITE] if favorites and any(i.name in favorites for i in r.ingredients) else r.tags
+        for r in recipes
+    }
     weekend_only = frozenset(r.slug for r in recipes if "finde" in r.tags)  # long recipes: Sat/Sun only
     habitual = frozenset(r.slug for r in recipes if HABITUAL in r.tags)
     pools = {slot: [r.slug for r in recipes if slot in r.tags or not (set(slots) & set(r.tags))] for slot in slots}

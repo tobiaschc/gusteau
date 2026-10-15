@@ -265,11 +265,13 @@ class Settings(Model):
     slots: list[str]
     prices: bool
     warehouse: str
+    favorite_ingredients: list[str] = Field(description="ingredient names the planner favours when picking mains")
 
 
 class SettingsIn(BaseModel):
     people: int | None = Field(default=None, ge=1, le=20)
     prices: bool | None = None
+    favorite_ingredients: list[str] | None = Field(default=None, max_length=100)
 
 
 class Health(Model):

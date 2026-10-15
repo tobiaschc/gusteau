@@ -1049,6 +1049,14 @@
       },
       "Settings": {
         "properties": {
+          "favorite_ingredients": {
+            "description": "ingredient names the planner favours when picking mains",
+            "items": {
+              "type": "string"
+            },
+            "title": "Favorite Ingredients",
+            "type": "array"
+          },
           "people": {
             "title": "People",
             "type": "integer"
@@ -1073,13 +1081,29 @@
           "people",
           "slots",
           "prices",
-          "warehouse"
+          "warehouse",
+          "favorite_ingredients"
         ],
         "title": "Settings",
         "type": "object"
       },
       "SettingsIn": {
         "properties": {
+          "favorite_ingredients": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Favorite Ingredients"
+          },
           "people": {
             "anyOf": [
               {

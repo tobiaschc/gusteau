@@ -1,7 +1,10 @@
-import { BarChart3, BookOpen, CalendarDays, Minus, Moon, Plus, ShoppingBasket, Sun, Users } from "lucide-react"
+import { BarChart3, BookOpen, CalendarDays, Minus, Moon, Plus, Settings, ShoppingBasket, Sun, Users } from "lucide-react"
 import { NavLink, Outlet } from "react-router-dom"
 import { RotatingQuote, ToqueMark } from "@/components/Brand"
+import { FavoritesOnboarding } from "@/components/FavoritesOnboarding"
+import { api } from "@/lib/api"
 import { useApp } from "@/lib/context"
+import { useLoad } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 
 const NAV = [
@@ -9,6 +12,7 @@ const NAV = [
   { to: "/recipes", label: "Recetas", icon: BookOpen, end: false },
   { to: "/list", label: "Lista", icon: ShoppingBasket, end: false },
   { to: "/stats", label: "Datos", icon: BarChart3, end: false },
+  { to: "/settings", label: "Ajustes", icon: Settings, end: false },
 ]
 
 export function PeopleStepper({ className }: { className?: string }) {
@@ -55,8 +59,10 @@ function Logo() {
 }
 
 export function Layout() {
+  const { data: settings, setData: setSettings } = useLoad(() => api.settings(), [])
   return (
     <div className="flex min-h-dvh">
+      {settings && <FavoritesOnboarding settings={settings} onSaved={setSettings} />}
       {/* Sidebar (desktop) */}
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r bg-sidebar md:flex">
         <div className="flex items-center justify-between border-b p-4">

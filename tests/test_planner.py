@@ -79,3 +79,22 @@ def test_generate_finds_near_optimal_weeks(tmp_path):
         penalty(generate(store.get_plan(WEEK), recipes, keep=False, seed=seed)["days"], tags) for seed in range(8)
     ]
     assert max(scores) <= 4 and scores.count(0) >= 6, scores
+
+
+def test_generate_favours_recipes_with_a_favorite_ingredient(tmp_path):
+    store = Store(tmp_path)
+    recipes = store.list_recipes()
+    favorite = "pechuga de pollo"
+    favored = {r.slug for r in recipes if any(i.name == favorite for i in r.ingredients)}
+    assert favored  # the bundled bank has at least one recipe using it
+
+    def mains_with_favorite(favorite_ingredients: list[str]) -> int:
+        total = 0
+        for seed in range(8):
+            days = generate(
+                store.get_plan(WEEK), recipes, keep=False, seed=seed, favorite_ingredients=favorite_ingredients
+            )["days"].values()
+            total += sum(d[s] in favored for d in days for s in ("comida", "cena"))
+        return total
+
+    assert mains_with_favorite([favorite]) > mains_with_favorite([])
