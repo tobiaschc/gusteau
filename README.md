@@ -30,6 +30,13 @@ docker compose up -d       # http://localhost:8000
 
 Builds the image (frontend + backend) and starts it with a persistent `gusteau-data` volume. Override the published port with `GUSTEAU_PUBLISHED_PORT` (default `8000`).
 
+### Install on your phone
+
+Gusteau installs as a home-screen app straight from the browser (a PWA): open it in Safari (iOS) or Chrome (Android), then "Share" → "Add to Home Screen" (iOS) or the browser's install prompt (Android). It launches full-screen with its own icon — no App Store, no Xcode, no developer account. Two ways to run it:
+
+- **Server-backed**: `docker compose up -d` and open the server's URL. Data and the Mercadona lookups go through that server; the phone just needs to reach it (same Wi-Fi, a VPN like Tailscale, or a domain behind a reverse proxy).
+- **On-device backend**: build the mobile bundle (`cd frontend && npm run build:mobile`) and serve the static `dist/` folder from anywhere (e.g. `npx serve dist`, or drop it next to the server's static files). Opening that URL once loads the backend itself — FastAPI running in-browser under [Pyodide](https://pyodide.org) — after which your data and every request but Mercadona's stay on the phone. There's no service worker yet, so each launch still needs one successful network fetch of the page/assets; a cold-offline open isn't supported.
+
 ### Backup
 
 Copy the whole data dir (or the Docker volume). For a consistent copy of a running instance use `sqlite3 gusteau.db ".backup gusteau-backup.db"`.
@@ -47,6 +54,8 @@ uv run pytest
 
 Frontend dev with hot reload: `uv run gusteau` in one shell, `cd frontend && npm run dev` in another (Vite proxies `/api` to :8000).
 
+Mobile mode (the on-device backend, see [Install on your phone](#install-on-your-phone)): `cd frontend && npm run dev:mobile` runs the whole app in the browser with no server — the backend runs in a web worker under [Pyodide](https://pyodide.org), through `gusteau/mobile.py`. `npm run build:python` (called by `dev:mobile`/`build:mobile`, runs with the project's Python via `uv`) prepares `frontend/public-mobile/`: the Pyodide runtime, the backend's wheels (sha256-checked, cached in `frontend/.pyodide-cache/`) and a zip of `gusteau/` + the bundled data, all precompiled to bytecode for a faster boot. The worker's data dir is in memory; the page restores it at boot and saves the files each write changes (IndexedDB in a browser).
+
 ### Layout
 
 ```
@@ -57,8 +66,10 @@ gusteau/
   db.py         SQLAlchemy models (plans, meals, purchases, settings) and engine; migrations/ = Alembic
   stats.py      SQL aggregations behind /api/stats
   api/          FastAPI routers (recipes, plans, shopping, settings) + schemas.py (the API contract)
+  mobile.py     in-process API for the mobile build (Pyodide calls it instead of a web server)
 frontend/src/
   pages/  components/  lib/api.ts (client) + lib/api.gen.ts (generated types)
+  lib/pyodide/  worker running the backend in-app + fetch()-compatible client (mobile build)
 tests/          one file per module, shared fakes in conftest.py
 ```
 

@@ -15,8 +15,17 @@ export type MealOutcome = S["MealOutcome"]
 export type Purchase = S["Purchase"]
 export type Stats = S["Stats"]
 
+/** The HTTP API, or the backend running inside the app (mobile build) — same paths, same Responses. */
+export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+  if (import.meta.env.VITE_RUNTIME === "pyodide") {
+    const { pyFetch } = await import("./pyodide/client") // statically dropped from the web build
+    return pyFetch(`/api${path}`, init)
+  }
+  return fetch(`/api${path}`, init)
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const res = await apiFetch(path, {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   })
