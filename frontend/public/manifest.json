@@ -1,0 +1,16 @@
+{
+  "name": "Gusteau",
+  "short_name": "Gusteau",
+  "description": "Recetas sanas, plan semanal y lista de la compra.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f3ea",
+  "theme_color": "#f8f3ea",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
