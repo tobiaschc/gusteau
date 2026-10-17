@@ -6,4 +6,6 @@ __pycache__/
 /data/
 gusteau/static/
 node_modules/
+frontend/public-mobile/
+frontend/.pyodide-cache/
 dist/

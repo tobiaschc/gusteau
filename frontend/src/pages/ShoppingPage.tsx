@@ -1,5 +1,5 @@
 import { Check, Copy, Download, House, RotateCcw, ShoppingBasket, Store, Undo2 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { type MouseEvent, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/Button"
 import { Card } from "@/components/ui/Card"
@@ -7,7 +7,7 @@ import { EmptyState, ErrorBox, Loading, PageHeader } from "@/components/ui/State
 import { euro, ProductPicker } from "@/components/ProductPicker"
 import { PurchaseBar } from "@/components/PurchaseBar"
 import { WeekNav } from "@/components/WeekNav"
-import { api, type Shopping, type ShoppingItem } from "@/lib/api"
+import { api, apiFetch, type Shopping, type ShoppingItem } from "@/lib/api"
 import { useApp } from "@/lib/context"
 import { useLoad } from "@/lib/hooks"
 import { cap, cn } from "@/lib/utils"
@@ -70,6 +70,16 @@ export function ShoppingPage() {
             .join("\n"),
       )
       .join("\n\n")
+
+  // In the mobile build there is no server behind /api: build the file in-app and hand it over as a blob.
+  const downloadInApp = async (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    const res = await apiFetch(`/plans/${week}/shopping.md?people=${people}`)
+    const url = URL.createObjectURL(new Blob([await res.text()], { type: "text/markdown" }))
+    const link = Object.assign(document.createElement("a"), { href: url, download: `lista-${week}.md` })
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   const copy = async () => {
     await navigator.clipboard.writeText(asText())
@@ -135,7 +145,11 @@ export function ShoppingPage() {
               <Button variant="outline" size="sm" onClick={copy}>
                 {copied ? <Check /> : <Copy />} {copied ? "Copiada" : "Copiar"}
               </Button>
-              <a href={`/api/plans/${week}/shopping.md?people=${people}`} download={`lista-${week}.md`}>
+              <a
+                href={`/api/plans/${week}/shopping.md?people=${people}`}
+                download={`lista-${week}.md`}
+                onClick={import.meta.env.VITE_RUNTIME === "pyodide" ? downloadInApp : undefined}
+              >
                 <Button variant="outline" size="sm">
                   <Download /> .md
                 </Button>

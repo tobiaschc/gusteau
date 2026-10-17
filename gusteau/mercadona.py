@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 import threading
 import time
 import unicodedata
@@ -39,16 +40,14 @@ class MercadonaError(Exception):
 
 
 def _http_post(url: str, body: dict) -> dict:
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(body).encode(),
-        headers={
-            "X-Algolia-Application-Id": ALGOLIA_APP,
-            "X-Algolia-API-Key": ALGOLIA_KEY,
-            "Content-Type": "application/json",
-            "User-Agent": "gusteau/0.1 (personal meal planner)",
-        },
-    )
+    headers = {
+        "X-Algolia-Application-Id": ALGOLIA_APP,
+        "X-Algolia-API-Key": ALGOLIA_KEY,
+        "Content-Type": "application/json",
+    }
+    if sys.platform != "emscripten":  # in the mobile app the request goes through the browser, which sets its own
+        headers["User-Agent"] = "gusteau/0.1 (personal meal planner)"
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers)
     with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
         return json.load(r)
 
